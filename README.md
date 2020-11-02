@@ -2,6 +2,8 @@
 
 MoveIt2 interface for Ignition Gazebo, in which MoveIt2 is utilised to generate trajectories that are transported across ROS 2<-->Ignition bridge and executed by JointTrajectoryController Ignition plugin.
 
+**Branch note: This might be a temporary location for the JointTrajectoryController plugin.**
+
 ![ign_moveit2_communication_scheme](_graphics/ign_moveit2_communication.png)
 
 Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/panda_ign.git) inside Ignition Gazebo are included for both C++ and Python.
@@ -9,6 +11,7 @@ Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/pan
 ## Directory Structure
 
 ```bash
+├── joint_trajectory_controller             # JointTrajectoryController plugin for Ignition
 ├── ign_moveit2_py                          # Python module for interfacing with MoveIt2->Ignition via actions (temporary substitute for moveit_commander)
 ├── examples                                # Python examples utilising ign_moveit2_py
 ├── src
@@ -39,7 +42,7 @@ Clone, clone dependencies and build with `colcon`.
 ```bash
 export PARENT_DIR=${PWD}
 mkdir -p ign_moveit2/src && cd ign_moveit2/src
-git clone https://github.com/AndrejOrsula/ign_moveit2.git -b main
+git clone https://github.com/AndrejOrsula/ign_moveit2.git -b joint_trajectory_controller
 vcs import < ign_moveit2/ign_moveit2.repos
 cd ..
 export IGNITION_VERSION=dome
@@ -61,6 +64,12 @@ Export `IGN_GAZEBO_RESOURCE_PATH` to make SDF of Panda discoverable within the c
 
 ```bash
 export IGN_GAZEBO_RESOURCE_PATH=${PARENT_DIR}/ign_moveit2/src/panda_ign:${IGN_GAZEBO_RESOURCE_PATH}
+```
+
+Export `IGN_GAZEBO_SYSTEM_PLUGIN_PATH` to make `JointTrajectoryController` discoverable within the context of Ignition Gazebo.
+
+```bash
+export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=${PARENT_DIR}/ign_moveit2/install:${IGN_GAZEBO_SYSTEM_PLUGIN_PATH}
 ```
 
 #### Examples
