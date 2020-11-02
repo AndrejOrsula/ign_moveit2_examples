@@ -166,17 +166,21 @@
                 <use_header_start_time>false</use_header_start_time>
 
                 <joint_names>panda_joint1 panda_joint2 panda_joint3 panda_joint4 panda_joint5 panda_joint6 panda_joint7</joint_names>
-                <initial_joint_positions>0 0 0 -1.5707963 0 1.5707963 0.78539816</initial_joint_positions>
+                <initial_joint_positions>0 0 0 -0.1 0 0.7854 0</initial_joint_positions>
 
-                <position_p_gain>50 10000 100 1000 100 100 10</position_p_gain>
-                <position_i_gain>0 0 0 0 0 0 0.5</position_i_gain>
-                <position_d_gain>20 500 10 50 10 10 0.1</position_d_gain>
+                <position_p_gain>  400  8500 500  1000 150   125   50    </position_p_gain>
+                <position_i_gain>  0    0    0    0    0     0     0.05  </position_i_gain>
+                <position_d_gain>  17.5 350  7.5  33   6     5     0.4   </position_d_gain>
+                <position_i_min>   1    1    1    1    1     1    -1     </position_i_min>
+                <position_i_max>  -1   -1   -1   -1   -1    -1     1     </position_i_max>
 
-                <velocity_p_gain>1 1 1 1 1 1 1</velocity_p_gain>
-                <velocity_i_gain>0.01 0.01 0.01 0.01 0.01 0.01 0.01</velocity_i_gain>
-                <velocity_d_gain>0 0 0 0 0 0 0</velocity_d_gain>
+                <velocity_p_gain>  0.5  5    2    3    0.1   0.05  0.01  </velocity_p_gain>
+                <velocity_i_gain>  0.01 0.02 0.01 0.01 0.002 0.001 0.0001</velocity_i_gain>
+                <velocity_i_min>  -1   -1   -1   -1   -1    -1    -1     </velocity_i_min>
+                <velocity_i_max>   1    1    1    1    1     1     1     </velocity_i_max>
             </plugin>
         </include>
 
     </world>
 </sdf>
+
