@@ -52,6 +52,9 @@ public:
   void Update(ignition::gazebo::EntityComponentManager &_ecm,
               const std::chrono::steady_clock::duration &_dt);
 
+  /// \brief Reset the position and velocity PID error on the joint
+  void ResetPIDs();
+
   /// \brief Entity of the joint
   Entity entity;
 
@@ -68,6 +71,9 @@ public:
     /// \brief Target force or torque of the joint
     double effort;
   } target;
+
+  /// \brief Initial position of the joint
+  double initialPosition;
 
   /// \brief List of PID controllers used for the control of this actuated joint
   struct PIDs
@@ -91,6 +97,9 @@ public:
   /// \brief Determine if the trajectory goal was reached
   /// \return True if trajectory goal was reached, False otherwise
   bool IsGoalReached() const;
+
+  /// \brief Reset trajectory internals, i.e. clean list of joint names, points and reset index of the current point
+  void Reset();
 
   /// \brief Status of the trajectory
   enum TrajectoryStatus
@@ -133,6 +142,9 @@ public:
                       const std::shared_ptr<const sdf::Element> &_sdf,
                       const ignition::gazebo::EntityComponentManager &_ecm,
                       const std::vector<std::string> &_enabledJoints);
+
+  /// \brief Reset internals of the plugin, without affecting already created components
+  void Reset();
 
   /// \brief Ignition communication node
   transport::Node node;
@@ -285,6 +297,15 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
     return;
   }
 
+  // Reset plugin when jump back in time is detected
+  if (_info.dt < std::chrono::steady_clock::duration::zero())
+  {
+    ignmsg << "[JointTrajectoryController] Resetting plugin because jump back in time ["
+           << std::chrono::duration_cast<std::chrono::seconds>(_info.dt).count()
+           << " s] was detected.\n";
+    this->dataPtr->Reset();
+  }
+
   // Update joint targets based on the current trajectory
   {
     auto isTargetUpdateRequired = false;
@@ -305,6 +326,13 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
       if (this->dataPtr->trajectory.points.empty())
       {
         this->dataPtr->trajectory.progress = Trajectory::Reached;
+      }
+
+      // Reset PID errors of the joints affected by the new trajectory
+      for (const auto &jointName : this->dataPtr->trajectory.jointNames)
+      {
+        auto *joint = &this->dataPtr->actuatedJoints[jointName];
+        joint->ResetPIDs();
       }
 
       // Update is always needed for a new trajectory
@@ -455,10 +483,7 @@ void JointTrajectoryControllerPrivate::JointTrajectoryCallback(const ignition::m
   }
 
   // Reset for a new trajectory
-  this->trajectory.progress = Trajectory::New;
-  this->trajectory.pointIndex = 0;
-  this->trajectory.jointNames.clear();
-  this->trajectory.points.clear();
+  this->trajectory.Reset();
 
   // Extract joint names and points
   for (const auto &joint_name : _msg.joint_names())
@@ -471,6 +496,25 @@ void JointTrajectoryControllerPrivate::JointTrajectoryCallback(const ignition::m
   }
 }
 
+void JointTrajectoryControllerPrivate::Reset()
+{
+  for (auto &actuatedJoint : this->actuatedJoints)
+  {
+    auto *joint = &actuatedJoint.second;
+    // Reset joint targets
+    joint->target.position = joint->initialPosition;
+    joint->target.velocity = 0.0;
+    joint->target.acceleration = 0.0;
+    joint->target.effort = 0.0;
+
+    // Reset PIDs
+    joint->ResetPIDs();
+  }
+
+  // Reset trajectory
+  this->trajectory.Reset();
+}
+
 /////////////////////
 /// ActuatedJoint ///
 /////////////////////
@@ -481,7 +525,8 @@ ActuatedJoint::ActuatedJoint(const Entity &_entity,
 {
   this->entity = _entity;
 
-  this->target.position = GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("initial_joint_positions")), _jointIndex, 0.0);
+  this->initialPosition = GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("initial_joint_positions")), _jointIndex, 0.0);
+  this->target.position = this->initialPosition;
   this->target.velocity = 0.0;
   this->target.acceleration = 0.0;
   this->target.effort = 0.0;
@@ -602,6 +647,12 @@ void ActuatedJoint::Update(ignition::gazebo::EntityComponentManager &_ecm,
   jointForceCmdComponent->Data()[0] = force;
 }
 
+void ActuatedJoint::ResetPIDs()
+{
+  this->pids.position.Reset();
+  this->pids.velocity.Reset();
+}
+
 //////////////////
 /// Trajectory ///
 //////////////////
@@ -646,6 +697,14 @@ bool Trajectory::IsGoalReached() const
   {
     return false;
   }
+}
+
+void Trajectory::Reset()
+{
+  this->progress = Trajectory::New;
+  this->pointIndex = 0;
+  this->jointNames.clear();
+  this->points.clear();
 }
 
 // Register plugin
