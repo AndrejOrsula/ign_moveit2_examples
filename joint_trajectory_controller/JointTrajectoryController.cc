@@ -98,6 +98,10 @@ public:
   /// \return True if trajectory goal was reached, False otherwise
   bool IsGoalReached() const;
 
+  /// \brief Compute completeness of the current trajectory
+  /// \return Fraction of the completed points in range [0.0, 1.0]
+  double ComputeCompleteness() const;
+
   /// \brief Reset trajectory internals, i.e. clean list of joint names, points and reset index of the current point
   void Reset();
 
@@ -291,19 +295,19 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
     this->dataPtr->componentSetupFinished = true;
   }
 
-  // Nothing else to do if paused
-  if (_info.paused)
-  {
-    return;
-  }
-
-  // Reset plugin when jump back in time is detected
+  // Reset plugin if jump back in time is detected
   if (_info.dt < std::chrono::steady_clock::duration::zero())
   {
     ignmsg << "[JointTrajectoryController] Resetting plugin because jump back in time ["
            << std::chrono::duration_cast<std::chrono::seconds>(_info.dt).count()
            << " s] was detected.\n";
     this->dataPtr->Reset();
+  }
+
+  // Nothing else to do if paused
+  if (_info.paused)
+  {
+    return;
   }
 
   // Update joint targets based on the current trajectory
@@ -331,6 +335,12 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
       // Reset PID errors of the joints affected by the new trajectory
       for (const auto &jointName : this->dataPtr->trajectory.jointNames)
       {
+        if (this->dataPtr->actuatedJoints.count(jointName) == 0)
+        {
+          ignwarn << "[JointTrajectoryController] Trajectory contains unconfigured joint ["
+                  << jointName << "].\n";
+          continue;
+        }
         auto *joint = &this->dataPtr->actuatedJoints[jointName];
         joint->ResetPIDs();
       }
@@ -356,6 +366,11 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
       for (auto jointIndex = 0u; jointIndex < this->dataPtr->trajectory.jointNames.size(); ++jointIndex)
       {
         const auto jointName = this->dataPtr->trajectory.jointNames[jointIndex];
+        if (this->dataPtr->actuatedJoints.count(jointName) == 0)
+        {
+          // Unconfigured joint is already logged
+          continue;
+        }
         auto *joint = &this->dataPtr->actuatedJoints[jointName];
         joint->SetTarget(targetPoint, jointIndex);
       }
@@ -696,6 +711,18 @@ bool Trajectory::IsGoalReached() const
   else
   {
     return false;
+  }
+}
+
+double Trajectory::ComputeCompleteness() const
+{
+  if (this->points.size() == 0)
+  {
+    return 1.0;
+  }
+  else
+  {
+    return (double)this->pointIndex / (double)this->points.size();
   }
 }
 
