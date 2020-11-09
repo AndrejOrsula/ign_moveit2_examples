@@ -12,7 +12,7 @@ Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/pan
 
 ```bash
 ├── joint_trajectory_controller             # JointTrajectoryController plugin for Ignition
-├── ign_moveit2_py                          # Python module for interfacing with MoveIt2->Ignition via actions (temporary substitute for moveit_commander)
+├── moveit2_py                              # Python module for interfacing with MoveIt2 (temporary substitute for moveit_commander)
 ├── examples                                # Python examples utilising ign_moveit2_py
 ├── src
     └── ign_moveit2.cpp                     # C++ template/example for interfacing with MoveIt2->Ignition with move_group API

@@ -47,7 +47,7 @@ install(TARGETS
 
 # Install python modules
 ament_python_install_module(
-    ign_moveit2_py/ign_moveit2.py
+    moveit2_py/moveit2.py
 )
 
 # Install python scripts and examples
