@@ -121,7 +121,8 @@ class MoveIt2Interface(Node):
         self.compute_fk_client_ = self.create_client(GetPositionFK,
                                                      "compute_fk")
         while not self.compute_fk_client_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Service [compute_fk] not available...")
+            self.get_logger().info(
+                "Service [compute_fk] not currently available, waiting...")
 
         self.fk_request_ = GetPositionFK.Request()
         self.fk_request_.header.frame_id = self.arm_base_link_
@@ -160,7 +161,8 @@ class MoveIt2Interface(Node):
         self.compute_ik_client_ = self.create_client(GetPositionIK,
                                                      "compute_ik")
         while not self.compute_ik_client_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Service [compute_ik] not available...")
+            self.get_logger().info(
+                "Service [compute_ik] not currently available, waiting...")
 
         self.ik_request_ = GetPositionIK.Request()
         self.ik_request_.ik_request.group_name = self.arm_group_name_
@@ -208,7 +210,7 @@ class MoveIt2Interface(Node):
                                                               "plan_kinematic_path")
         while not self.plan_kinematic_path_client_.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(
-                "Service [plan_kinematic_path] not available...")
+                "Service [plan_kinematic_path] not currently available, waiting...")
 
         self.kinematic_path_request_ = GetMotionPlan.Request()
         self.kinematic_path_request_.motion_plan_request.workspace_parameters.header.frame_id = self.arm_base_link_
@@ -382,7 +384,7 @@ class MoveIt2Interface(Node):
     #     self.move_action_client_ = ActionClient(self, MoveGroup,
     #                                             "move_action")
     #     while not self.move_action_client_.wait_for_server(timeout_sec=1.0):
-    #         self.get_logger().info("Action [move_action] not available...")
+    #         self.get_logger().info("Action [move_action] not currently available, waiting...")
 
     #     self.move_action_goal_ = MoveGroup.Goal()
 
