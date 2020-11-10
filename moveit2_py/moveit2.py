@@ -16,7 +16,7 @@ from builtin_interfaces.msg import Duration
 from geometry_msgs.msg import Pose, Quaternion
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from moveit_msgs.msg import Constraints, JointConstraint, PositionConstraint, OrientationConstraint, PositionIKRequest, RobotTrajectory
 from moveit_msgs.srv import GetPositionIK, GetPositionFK, GetMotionPlan, GetCartesianPath
 from moveit_msgs.action import MoveGroup
@@ -109,9 +109,28 @@ class MoveIt2Interface(Node):
 
     def execute(self):
         """
-        Execute last motion plan.
+        Execute last planned motion plan.
         """
         self.pub_trajectory(self.motion_plan_)
+
+    def move_to_joint_state(self, joint_state, set_position=True, set_velocity=True, set_effort=True):
+        """
+        Set joint target on all joints defined in `joint_state`. This function does NOT plan a smooth
+        trajectory and only publishes joint_state as the next goal that should be reached immediately.
+        """
+        joint_trajectory = JointTrajectory()
+        joint_trajectory.joint_names = joint_state.name
+
+        point = JointTrajectoryPoint()
+        if set_position:
+            point.positions = joint_state.position
+        if set_velocity:
+            point.velocities = joint_state.velocity
+        if set_effort:
+            point.effort = joint_state.effort
+        joint_trajectory.points.append(point)
+
+        self.pub_trajectory(joint_trajectory)
 
     # compute_fk
     def init_compute_fk(self):
