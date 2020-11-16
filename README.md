@@ -4,7 +4,7 @@ MoveIt2 interface for Ignition Gazebo, in which MoveIt2 is utilised to generate 
 
 **Branch note: This might be a temporary location for the JointTrajectoryController plugin.**
 
-![ign_moveit2_communication_scheme](_graphics/ign_moveit2_communication.png)
+![ign_moveit2_communication_scheme](_graphics/ign_moveit2_communication.svg)
 
 Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/panda_ign.git) inside Ignition Gazebo are included for both C++ and Python.
 
