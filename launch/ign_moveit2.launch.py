@@ -32,9 +32,9 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 [os.path.join(get_package_share_directory("panda_moveit2_config"),
                               "launch", "move_group_action_server.launch.py")]),
-            launch_arguments=[('use_sim_time', use_sim_time),
-                              ('config_rviz2', config_rviz2)]
-        ),
+            # Simulation time does not function properly (as of Nov 2020), see https://github.com/AndrejOrsula/ign_moveit2/issues/4
+            launch_arguments=[('use_sim_time', "False"),
+                              ('config_rviz2', config_rviz2)]),
 
         # Clock bridge (IGN -> ROS2)
         Node(package="ros_ign_bridge",
