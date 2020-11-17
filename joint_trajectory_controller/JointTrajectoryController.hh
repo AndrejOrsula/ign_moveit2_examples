@@ -19,8 +19,8 @@ namespace ignition
         /// reference to one or more 1-axis joints in order to follow a trajectory.
         ///
         /// Joint trajectories can be sent to this plugin via Ignition Transport.
-        /// The default topic name is "/joint_trajectory", but it can be specified
-        /// with the `<topic>` system parameter.
+        /// The default topic name is "/model/${MODEL_NAME}/joint_trajectory".
+        /// This topic name can be configured with the `<topic>` system parameter.
         ///
         /// This topic accepts ignition::msgs::JointTrajectory messages that represent
         /// a full trajectory, defined as temporal `points` with their fields ordered

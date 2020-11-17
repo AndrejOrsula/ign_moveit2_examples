@@ -2,6 +2,7 @@
 #include <ignition/plugin/Register.hh>
 
 #include <ignition/gazebo/Model.hh>
+#include <ignition/gazebo/components/ParentEntity.hh>
 #include <ignition/gazebo/components/Name.hh>
 #include <ignition/gazebo/components/Joint.hh>
 #include <ignition/gazebo/components/JointType.hh>
@@ -266,11 +267,14 @@ void JointTrajectoryController::Configure(const Entity &_entity,
   auto topic = _sdf->Get<std::string>("topic");
   if (topic.empty())
   {
-    topic = "/joint_trajectory";
-    igndbg << "[JointTrajectoryController] No topic specified, defaulting to [" << topic << "].\n";
+    topic = "/model/" + model.Name(_ecm) + "/joint_trajectory";
+    ignmsg << "[JointTrajectoryController] No topic specified, defaulting to [" << topic << "].\n";
   }
   else
   {
+    if (topic[0] != '/') {
+      topic.insert(0, "/");
+    }
     ignmsg << "[JointTrajectoryController] Topic set to [" << topic << "].\n";
   }
   this->dataPtr->node.Subscribe(topic, &JointTrajectoryControllerPrivate::JointTrajectoryCallback, this->dataPtr.get());
@@ -722,7 +726,7 @@ double Trajectory::ComputeCompleteness() const
   }
   else
   {
-    return (double)this->pointIndex / (double)this->points.size();
+    return ((double)this->pointIndex + 1) / (double)this->points.size();
   }
 }
 
