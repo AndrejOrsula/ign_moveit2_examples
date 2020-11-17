@@ -62,15 +62,5 @@ def generate_launch_description():
              output="screen",
              arguments=[
                  "/joint_trajectory@trajectory_msgs/msg/JointTrajectory]ignition.msgs.JointTrajectory"],
-             parameters=[{'use_sim_time': use_sim_time}]),
-
-        # Static TF
-        Node(package='tf2_ros',
-             executable='static_transform_publisher',
-             name='static_transform_publisher',
-             output='log',
-             arguments=['0.0', '0.0', '0.0',
-                        '0.0', '0.0', '0.0',
-                        'world', 'panda_link0'],
              parameters=[{'use_sim_time': use_sim_time}])
     ])
