@@ -12,6 +12,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 
+from std_msgs.msg import Float32
 from builtin_interfaces.msg import Duration
 from geometry_msgs.msg import Pose, Quaternion
 from shape_msgs.msg import SolidPrimitive
@@ -68,6 +69,10 @@ class MoveIt2Interface(Node):
                                "panda_leftfinger",
                                "panda_rightfinger"]
 
+        # Publisher of trajectories
+        self.joint_trajectory_pub_ = self.create_publisher(JointTrajectory,
+                                                           "joint_trajectory", 1)
+
         # Subscriber of current joint states
         self.joint_state_ = JointState()
         self.joint_state_mutex_ = threading.Lock()
@@ -75,9 +80,12 @@ class MoveIt2Interface(Node):
                                                          "joint_states",
                                                          self.joint_state_callback, 1)
 
-        # Publisher of trajectories
-        self.joint_trajectory_pub_ = self.create_publisher(JointTrajectory,
-                                                           "joint_trajectory", 1)
+        # Subscriber of joint trajectory progress
+        self.joint_progress_ = 1.0
+        self.joint_progress_cond_ = threading.Condition()
+        self.joint_progress_sub_ = self.create_subscription(Float32,
+                                                            "joint_trajectory_progress",
+                                                            self.joint_progress_callback, 1)
 
     def joint_state_callback(self, msg):
         """
@@ -96,6 +104,22 @@ class MoveIt2Interface(Node):
         self.joint_state_mutex_.release()
         return joint_state
 
+    def joint_progress_callback(self, msg):
+        """
+        Callback for getting joint trajectory progress.
+        """
+        with self.joint_progress_cond_:
+            self.joint_progress_ = msg.data
+            self.joint_progress_cond_.notify_all()
+
+    def wait_until_executed(self):
+        """
+        Function that halts execution on the current thread until trajectory is executed.
+        """
+        with self.joint_progress_cond_:
+            while not self.joint_progress_ == 1.0:
+                self.joint_progress_cond_.wait()
+
     def pub_trajectory(self, trajectory):
         """
         Publish trajectory such that it can be executed, e.g. by `JointTrajectoryController` Ignition plugin.
@@ -107,11 +131,21 @@ class MoveIt2Interface(Node):
         else:
             raise Exception("Invalid type passed into pub_trajectory()")
 
-    def execute(self):
+    def execute(self) -> bool:
         """
         Execute last planned motion plan.
         """
+        # Make sure there is a plan to follow
+        if not self.motion_plan_.joint_trajectory.points:
+            self.get_logger().warn(
+                "Cannot execute motion plan because it does not contain any trajectory points")
+            return False
+
+        # Reset joint progress
+        self.joint_progress_ = 0.0
+
         self.pub_trajectory(self.motion_plan_)
+        return True
 
     def move_to_joint_state(self, joint_state, set_position=True, set_velocity=True, set_effort=True):
         """
