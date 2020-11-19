@@ -13,7 +13,9 @@
 #include <ignition/math/PID.hh>
 
 #include <ignition/transport/Node.hh>
+#include <ignition/transport/Publisher.hh>
 #include <ignition/msgs/joint_trajectory.pb.h>
+#include <ignition/msgs/float.pb.h>
 
 #include "JointTrajectoryController.hh"
 
@@ -99,9 +101,9 @@ public:
   /// \return True if trajectory goal was reached, False otherwise
   bool IsGoalReached() const;
 
-  /// \brief Compute completeness of the current trajectory
+  /// \brief Compute progress of the current trajectory
   /// \return Fraction of the completed points in range [0.0, 1.0]
-  double ComputeCompleteness() const;
+  float ComputeProgress() const;
 
   /// \brief Reset trajectory internals, i.e. clean list of joint names, points and reset index of the current point
   void Reset();
@@ -115,7 +117,7 @@ public:
     Active,
     /// \brief Trajectory goal is reached
     Reached,
-  } progress;
+  } status;
 
   /// \brief Start time of trajectory
   std::chrono::steady_clock::duration startTime;
@@ -153,6 +155,9 @@ public:
 
   /// \brief Ignition communication node
   transport::Node node;
+
+  /// \brief Publisher of the progress for currently followed trajectory
+  transport::Node::Publisher progressPub;
 
   /// \brief Map of actuated joints, where first is the name of the joint
   std::map<std::string, ActuatedJoint> actuatedJoints;
@@ -264,20 +269,25 @@ void JointTrajectoryController::Configure(const Entity &_entity,
   }
 
   // Subscribe to joint trajectory commands
-  auto topic = _sdf->Get<std::string>("topic");
-  if (topic.empty())
+  auto trajectoryTopic = _sdf->Get<std::string>("topic");
+  if (trajectoryTopic.empty())
   {
-    topic = "/model/" + model.Name(_ecm) + "/joint_trajectory";
-    ignmsg << "[JointTrajectoryController] No topic specified, defaulting to [" << topic << "].\n";
+    trajectoryTopic = "/model/" + model.Name(_ecm) + "/joint_trajectory";
+    ignmsg << "[JointTrajectoryController] No topic specified for joint trajectories, defaulting to [" << trajectoryTopic << "].\n";
   }
   else
   {
-    if (topic[0] != '/') {
-      topic.insert(0, "/");
+    if (trajectoryTopic[0] != '/')
+    {
+      trajectoryTopic.insert(0, "/");
     }
-    ignmsg << "[JointTrajectoryController] Topic set to [" << topic << "].\n";
+    ignmsg << "[JointTrajectoryController] Joint trajectory topic set to [" << trajectoryTopic << "].\n";
   }
-  this->dataPtr->node.Subscribe(topic, &JointTrajectoryControllerPrivate::JointTrajectoryCallback, this->dataPtr.get());
+  this->dataPtr->node.Subscribe(trajectoryTopic, &JointTrajectoryControllerPrivate::JointTrajectoryCallback, this->dataPtr.get());
+
+  // Advertise progress
+  const auto progressTopic = trajectoryTopic + "_progress";
+  this->dataPtr->progressPub = this->dataPtr->node.Advertise<ignition::msgs::Float>(progressTopic);
 }
 
 void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_info,
@@ -321,19 +331,19 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
     // Lock mutex before accessing trajectory
     std::lock_guard<std::mutex> lock(this->dataPtr->trajectoryMutex);
 
-    if (this->dataPtr->trajectory.progress == Trajectory::New)
+    if (this->dataPtr->trajectory.status == Trajectory::New)
     {
       // Set trajectory start time if not set before
       if (this->dataPtr->trajectory.startTime.count() == 0)
       {
         this->dataPtr->trajectory.startTime = _info.simTime;
-        this->dataPtr->trajectory.progress = Trajectory::Active;
+        this->dataPtr->trajectory.status = Trajectory::Active;
       }
 
       // If the new trajectory has no points, consider it reached
       if (this->dataPtr->trajectory.points.empty())
       {
-        this->dataPtr->trajectory.progress = Trajectory::Reached;
+        this->dataPtr->trajectory.status = Trajectory::Reached;
       }
 
       // Reset PID errors of the joints affected by the new trajectory
@@ -353,7 +363,7 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
       isTargetUpdateRequired = true;
     }
 
-    if (this->dataPtr->trajectory.progress == Trajectory::Active)
+    if (this->dataPtr->trajectory.status == Trajectory::Active)
     {
       // Determine what point needs to be reached at the current time
       if (this->dataPtr->trajectory.UpdateCurrentPoint(_info.simTime))
@@ -364,7 +374,7 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
     }
 
     // Update the target for each joint that is defined in the trajectory, if needed
-    if (isTargetUpdateRequired && this->dataPtr->trajectory.progress != Trajectory::Reached)
+    if (isTargetUpdateRequired && this->dataPtr->trajectory.status != Trajectory::Reached)
     {
       const auto targetPoint = this->dataPtr->trajectory.points[this->dataPtr->trajectory.pointIndex];
       for (auto jointIndex = 0u; jointIndex < this->dataPtr->trajectory.jointNames.size(); ++jointIndex)
@@ -382,8 +392,13 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
       // If there are no more points after the current one, set the trajectory to Reached
       if (this->dataPtr->trajectory.IsGoalReached())
       {
-        this->dataPtr->trajectory.progress = Trajectory::Reached;
+        this->dataPtr->trajectory.status = Trajectory::Reached;
       }
+
+      // Publish current progress of the trajectory
+      ignition::msgs::Float progressMsg;
+      progressMsg.set_data(this->dataPtr->trajectory.ComputeProgress());
+      this->dataPtr->progressPub.Publish(progressMsg);
     }
   }
 
@@ -480,7 +495,7 @@ void JointTrajectoryControllerPrivate::JointTrajectoryCallback(const ignition::m
   // Lock mutex guarding the trajectory
   std::lock_guard<std::mutex> lock(this->trajectoryMutex);
 
-  if (this->trajectory.progress != Trajectory::Reached)
+  if (this->trajectory.status != Trajectory::Reached)
   {
     ignwarn << "[JointTrajectoryController] A new JointTrajectory message was received while executing a previous trajectory.\n";
     // TODO: Handle this behaviour properly
@@ -718,7 +733,7 @@ bool Trajectory::IsGoalReached() const
   }
 }
 
-double Trajectory::ComputeCompleteness() const
+float Trajectory::ComputeProgress() const
 {
   if (this->points.size() == 0)
   {
@@ -726,13 +741,13 @@ double Trajectory::ComputeCompleteness() const
   }
   else
   {
-    return ((double)this->pointIndex + 1) / (double)this->points.size();
+    return ((float)this->pointIndex + 1) / (float)this->points.size();
   }
 }
 
 void Trajectory::Reset()
 {
-  this->progress = Trajectory::New;
+  this->status = Trajectory::New;
   this->pointIndex = 0;
   this->jointNames.clear();
   this->points.clear();

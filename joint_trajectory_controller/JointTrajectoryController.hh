@@ -22,6 +22,9 @@ namespace ignition
         /// The default topic name is "/model/${MODEL_NAME}/joint_trajectory".
         /// This topic name can be configured with the `<topic>` system parameter.
         ///
+        /// The progress of the current trajectory can be similarly tracked on
+        /// another topic whose name is derived as `<topic>_progress`.
+        ///
         /// This topic accepts ignition::msgs::JointTrajectory messages that represent
         /// a full trajectory, defined as temporal `points` with their fields ordered
         /// according to `joint_names` field. The fields under `points` are

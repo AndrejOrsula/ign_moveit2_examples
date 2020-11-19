@@ -62,5 +62,14 @@ def generate_launch_description():
              output="screen",
              arguments=[
                  "/joint_trajectory@trajectory_msgs/msg/JointTrajectory]ignition.msgs.JointTrajectory"],
+             parameters=[{'use_sim_time': use_sim_time}]),
+
+        # JointTrajectoryProgress bridge (IGN -> ROS2)
+        Node(package="ros_ign_bridge",
+             executable="parameter_bridge",
+             name="parameter_bridge_joint_trajectory_progreess",
+             output="screen",
+             arguments=[
+                 "/joint_trajectory_progress@std_msgs/msg/Float32[ignition.msgs.Float"],
              parameters=[{'use_sim_time': use_sim_time}])
     ])
