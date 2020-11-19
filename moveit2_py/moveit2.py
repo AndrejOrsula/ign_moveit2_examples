@@ -33,6 +33,7 @@ class MoveIt2Interface(Node):
         self.init_compute_ik()
         self.init_plan_kinematic_path()
         self.init_plan_cartesian_path()
+        self.init_gripper()
         self.get_logger().info("ign_moveit2_py initialised successfuly")
 
     def init_robot(self):
@@ -65,9 +66,9 @@ class MoveIt2Interface(Node):
         self.gripper_group_name_ = "hand"
         self.gripper_joints_ = ["panda_finger_joint1",
                                 "panda_finger_joint2"]
-        self.gripper_links_ = ["panda_hand",
-                               "panda_leftfinger",
+        self.gripper_links_ = ["panda_leftfinger",
                                "panda_rightfinger"]
+        self.gripper_max_speed_ = 0.2
 
         # Publisher of trajectories
         self.joint_trajectory_pub_ = self.create_publisher(JointTrajectory,
@@ -118,7 +119,7 @@ class MoveIt2Interface(Node):
         """
         with self.joint_progress_cond_:
             while not self.joint_progress_ == 1.0:
-                self.joint_progress_cond_.wait()
+                self.joint_progress_cond_.wait(timeout=0.5)
 
     def pub_trajectory(self, trajectory):
         """
@@ -131,12 +132,18 @@ class MoveIt2Interface(Node):
         else:
             raise Exception("Invalid type passed into pub_trajectory()")
 
-    def execute(self) -> bool:
+    def execute(self, joint_trajectory=None) -> bool:
         """
-        Execute last planned motion plan.
+        Execute last planned motion plan, or the `joint_trajectory` specified as argument.
         """
+
+        if joint_trajectory == None:
+            plan = self.motion_plan_.joint_trajectory
+        else:
+            plan = joint_trajectory
+
         # Make sure there is a plan to follow
-        if not self.motion_plan_.joint_trajectory.points:
+        if not plan.points:
             self.get_logger().warn(
                 "Cannot execute motion plan because it does not contain any trajectory points")
             return False
@@ -144,7 +151,7 @@ class MoveIt2Interface(Node):
         # Reset joint progress
         self.joint_progress_ = 0.0
 
-        self.pub_trajectory(self.motion_plan_)
+        self.pub_trajectory(plan)
         return True
 
     def move_to_joint_state(self, joint_state, set_position=True, set_velocity=True, set_effort=True):
@@ -426,6 +433,102 @@ class MoveIt2Interface(Node):
         """
         # TODO
         pass
+
+    def init_gripper(self):
+        """
+        Initialise `gripper` service.
+        """
+        # Service client for IK
+        self.plan_gripper_path_client_ = self.create_client(GetMotionPlan,
+                                                            "plan_kinematic_path")
+        while not self.plan_gripper_path_client_.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(
+                "Service [plan_kinematic_path] not currently available, waiting...")
+
+        self.gripper_path_request_ = GetMotionPlan.Request()
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.header.frame_id = self.arm_base_link_
+        # self.gripper_path_request_.motion_plan_request.workspace_parameters.header.stamp = "Set during request"
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.min_corner.x = -0.855
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.min_corner.y = -0.855
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.min_corner.z = -0.36
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.max_corner.x = 0.855
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.max_corner.y = 0.855
+        self.gripper_path_request_.motion_plan_request.workspace_parameters.max_corner.z = 1.19
+        # self.gripper_path_request_.motion_plan_request.start_state = "Ignored"
+        self.gripper_path_request_.motion_plan_request.goal_constraints = [
+            Constraints()]
+        self.gripper_path_request_.motion_plan_request.goal_constraints[0].joint_constraints.append(
+            JointConstraint())
+        self.gripper_path_request_.motion_plan_request.goal_constraints[0].joint_constraints[0].joint_name = self.gripper_joints_[
+            0]
+        # self.gripper_path_request_.motion_plan_request.goal_constraints[0].joint_constraints[0].position = "Set during request"
+        # self.gripper_path_request_.motion_plan_request.goal_constraints[0].joint_constraints[0].tolerance_above = "Ignored"
+        # self.gripper_path_request_.motion_plan_request.goal_constraints[0].joint_constraints[0].tolerance_below = "Ignored"
+        self.gripper_path_request_.motion_plan_request.goal_constraints[
+            0].joint_constraints[0].weight = 1.0
+        # self.gripper_path_request_.motion_plan_request.path_constraints = "Ignored"
+        # self.gripper_path_request_.motion_plan_request.trajectory_constraints = "Ignored"
+        # self.gripper_path_request_.motion_plan_request.reference_trajectories = "Ignored"
+        # self.gripper_path_request_.motion_plan_request.planner_id = "Ignored"
+        self.gripper_path_request_.motion_plan_request.group_name = self.gripper_group_name_
+        self.gripper_path_request_.motion_plan_request.num_planning_attempts = 1
+        self.gripper_path_request_.motion_plan_request.allowed_planning_time = 0.1
+        # self.gripper_path_request_.motion_plan_request.max_velocity_scaling_factor = "Set during request"
+        self.gripper_path_request_.motion_plan_request.max_acceleration_scaling_factor = 0.0
+        # self.gripper_path_request_.motion_plan_request.cartesian_speed_end_effector_link = "Ignored"
+        # self.gripper_path_request_.motion_plan_request.max_cartesian_speed = "Ignored"
+
+    def gripper_plan_path(self, width, speed) -> JointTrajectory:
+        self.gripper_path_request_.motion_plan_request.max_velocity_scaling_factor = speed / \
+            self.gripper_max_speed_
+        self.gripper_path_request_.motion_plan_request.goal_constraints[
+            0].joint_constraints[0].position = width/2
+
+        self.plan_gripper_path_client_.wait_for_service()
+        response = self.plan_gripper_path_client_.call(
+            self.gripper_path_request_)
+
+        joint_trajectory = response.motion_plan_response.trajectory.joint_trajectory
+
+        # Mirror motion on the second finger (might be more efficient than double planning)
+        joint_trajectory.joint_names.append(self.gripper_joints_[1])
+        for i in range(len(joint_trajectory.points)):
+            if joint_trajectory.points[i].positions:
+                joint_trajectory.points[i].positions.append(
+                    joint_trajectory.points[i].positions[0])
+            if joint_trajectory.points[i].velocities:
+                joint_trajectory.points[i].velocities.append(
+                    joint_trajectory.points[i].velocities[0])
+            if joint_trajectory.points[i].accelerations:
+                joint_trajectory.points[i].accelerations.append(
+                    joint_trajectory.points[i].accelerations[0])
+            if joint_trajectory.points[i].effort:
+                joint_trajectory.points[i].effort.append(
+                    joint_trajectory.points[i].effort[0])
+
+        return joint_trajectory
+
+    def gripper_close(self, width=0.0, speed=0.2, force=20.0) -> bool:
+        joint_trajectory = self.gripper_plan_path(width, speed)
+
+        if not joint_trajectory.points:
+            return False
+
+        # Set the desired force on the last point
+        joint_trajectory.points[-1].effort = [-force, -force]
+
+        return self.execute(joint_trajectory)
+
+    def gripper_open(self, width=0.08, speed=0.2) -> bool:
+        joint_trajectory = self.gripper_plan_path(width, speed)
+
+        if not joint_trajectory.points:
+            return False
+
+        # Make sure no force is applied anymore
+        joint_trajectory.points[0].effort = [0.0, 0.0]
+
+        return self.execute(joint_trajectory)
 
     # # move_action
     # # Note: Use `plan_kinematic_path()` or `plan_cartesian_path()` together with `execute()` instead
