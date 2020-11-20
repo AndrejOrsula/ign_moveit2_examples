@@ -13,14 +13,13 @@ Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/pan
 ```bash
 ├── joint_trajectory_controller             # JointTrajectoryController plugin for Ignition
 ├── moveit2_py                              # Python module for interfacing with MoveIt2 (temporary substitute for moveit_commander)
-├── examples                                # Python examples utilising ign_moveit2_py
-├── src
-    └── ign_moveit2.cpp                     # C++ template/example for interfacing with MoveIt2->Ignition with move_group API
+├── examples                                # Python and C++ examples
 ├── launch
     ├── ign_moveit2.launch.py               # Helpful launch file that starts up MoveIt2 move_group action server and bridges between ROS 2 and Ignition
-    └── move_group_cpp_example.launch.py    # Launch of the C++ example
+    └── examples                            # Launch files for examples
 ├── worlds
-    └── panda_example.sdf                   # Barebones example world for Ignition Gazebo
+    ├── panda_follow.sdf                    # Gazebo world for follow examples
+    └── panda_throw.sdf                     # Gazebo world for throw example
 └── ign_moveit2.repos                       # List of other dependencies created for `ign_moveit2`
 ```
 
@@ -60,12 +59,6 @@ Source the ROS 2 workspace overlay.
 source ${PARENT_DIR}/ign_moveit2/install/local_setup.bash
 ```
 
-Export `IGN_GAZEBO_RESOURCE_PATH` to make SDF of Panda discoverable within the context of Ignition Gazebo.
-
-```bash
-export IGN_GAZEBO_RESOURCE_PATH=${PARENT_DIR}/ign_moveit2/src/panda_ign:${IGN_GAZEBO_RESOURCE_PATH}
-```
-
 Export `IGN_GAZEBO_SYSTEM_PLUGIN_PATH` to make `JointTrajectoryController` discoverable within the context of Ignition Gazebo.
 
 ```bash
@@ -74,27 +67,18 @@ export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=${PARENT_DIR}/ign_moveit2/install:${IGN_GAZ
 
 #### Examples
 
-Launch Ignition Gazebo world with Panda robot.
+##### Follow
 
 ```bash
-ign gazebo ${PARENT_DIR}/ign_moveit2/src/ign_moveit2/worlds/panda_example.sdf
+ros2 launch ign_moveit2 example_follow_object.launch.py
 ```
 
-Start MoveIt2 move_group action server and the required bridges between ROS 2 and Ignition.
+![follow](_graphics/ign_moveit2_follow.gif)
+
+##### Throw
 
 ```bash
-ros2 launch ign_moveit2 ign_moveit2.launch.py
+ros2 launch ign_moveit2 example_throw.launch.py
 ```
 
-Run C++ example.
-
-```bash
-ros2 launch ign_moveit2 move_group_cpp_example.launch.py
-```
-
-Run Python examples.
-
-```bash
-ros2 run ign_moveit2 example_joint_goal.py --ros-args -p use_sim_time:=true
-ros2 run ign_moveit2 example_pose_goal.py --ros-args -p use_sim_time:=true
-```
+![throw](_graphics/ign_moveit2_throw.gif)
