@@ -30,9 +30,9 @@ find_package(moveit_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 # Executables
-set(EXECUTABLE_0 ign_moveit2)
-# Executable 0
-add_executable(${EXECUTABLE_0} src/${EXECUTABLE_0}.cpp)
+set(EXECUTABLE_0 example_ign_moveit2)
+# Executable 0 (example)
+add_executable(${EXECUTABLE_0} examples/cpp/${EXECUTABLE_0}.cpp)
 ament_target_dependencies(${EXECUTABLE_0}
     rclcpp
     moveit_ros_planning_interface
@@ -50,17 +50,20 @@ ament_python_install_module(
     moveit2_py/moveit2.py
 )
 
-# Install python scripts and examples
-set(SCRIPTS_DIR scripts)
-set(EXAMPLES_DIR examples)
+# Install python examples
+set(EXAMPLES_DIR examples/python)
 install(PROGRAMS
     ${EXAMPLES_DIR}/example_joint_goal.py
     ${EXAMPLES_DIR}/example_pose_goal.py
+    ${EXAMPLES_DIR}/example_follow_object.py
+    ${EXAMPLES_DIR}/example_follow_object_trajectory.py
+    ${EXAMPLES_DIR}/example_follow_object_trajectory_wait_until_executed.py
+    ${EXAMPLES_DIR}/example_throw.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install directories
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch worlds DESTINATION share/${PROJECT_NAME})
 
 add_subdirectory(joint_trajectory_controller)
 

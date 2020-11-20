@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+import threading
+
 import rclpy
 from moveit2 import MoveIt2Interface
 
-import threading
 from scipy.spatial.transform import Rotation
 
 
@@ -19,16 +20,13 @@ def main(args=None):
     thread = threading.Thread(target=executor.spin)
     thread.start()
 
-    # Set pose goal to reach
-    position = [0.25, 0.25, 0.5]
-    quaternion = Rotation.from_euler('xyz',
-                                     [180, 0, 0],
-                                     degrees=True).as_quat()
-    moveit2.set_pose_goal(position, quaternion)
+    # Open
+    moveit2.gripper_open(width=0.08, speed=0.2)
+    moveit2.wait_until_executed()
 
-    # Plan and execute
-    moveit2.plan_kinematic_path()
-    moveit2.execute()
+    # Close
+    moveit2.gripper_close(width=0.0, speed=0.2, force=20.0)
+    moveit2.wait_until_executed()
 
     rclpy.shutdown()
 

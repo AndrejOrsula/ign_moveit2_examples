@@ -7,6 +7,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def load_file(package_name, file_path):
@@ -34,6 +36,8 @@ def load_yaml(package_name, file_path):
 def generate_launch_description():
     # Launch Arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
+    config_rviz2 = LaunchConfiguration('config_rviz2', default=os.path.join(get_package_share_directory("ign_moveit2"),
+                                                                            "launch", "rviz.rviz"))
 
     # URDF
     robot_urdf_config = load_file("panda_ign",
@@ -55,11 +59,15 @@ def generate_launch_description():
             'use_sim_time',
             default_value=use_sim_time,
             description='If true, use simulated clock'),
+        DeclareLaunchArgument(
+            'config_rviz2',
+            default_value=config_rviz2,
+            description='Path to config for RViz2'),
 
-        # MoveGroupInterface demo executable
-        Node(name='ign_moveit2',
-             package='ign_moveit2',
-             executable='ign_moveit2',
+        # C++ example executable
+        Node(package='ign_moveit2',
+             executable='example_ign_moveit2',
+             name='example_ign_moveit2',
              output='screen',
              parameters=[robot_description,
                          robot_description_semantic,
