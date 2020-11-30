@@ -9,9 +9,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="192.351mm"
+   width="206.05139mm"
    height="53.794472mm"
-   viewBox="0 0 192.351 53.794472"
+   viewBox="0 0 206.05139 53.794472"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
@@ -119,22 +119,6 @@
        is_visible="true"
        id="path-effect3659"
        effect="bspline" />
-    <marker
-       inkscape:isstock="true"
-       style="overflow:visible"
-       id="marker3617"
-       refX="0"
-       refY="0"
-       orient="auto"
-       inkscape:stockid="Arrow2Mend"
-       inkscape:collect="always">
-      <path
-         transform="scale(-0.6)"
-         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
-         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
-         id="path3615"
-         inkscape:connector-curvature="0" />
-    </marker>
     <marker
        inkscape:isstock="true"
        style="overflow:visible"
@@ -286,6 +270,57 @@
        apply_no_weight="true"
        apply_with_weight="true"
        only_selected="false" />
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker7330-3"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Mend">
+      <path
+         transform="scale(-0.6)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path7328-6"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect7326-7"
+       effect="bspline" />
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker4466-5"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path4464-3"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect4462-5"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -294,9 +329,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.25000001"
-     inkscape:cx="344.07807"
-     inkscape:cy="29.484561"
+     inkscape:zoom="2.0000001"
+     inkscape:cx="436.36641"
+     inkscape:cy="-13.942687"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -306,11 +341,11 @@
      inkscape:snap-midpoints="true"
      inkscape:snap-intersection-paths="true"
      inkscape:object-paths="true"
-     inkscape:window-width="510"
-     inkscape:window-height="489"
-     inkscape:window-x="960"
-     inkscape:window-y="449"
-     inkscape:window-maximized="0"
+     inkscape:window-width="2560"
+     inkscape:window-height="1417"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
@@ -326,7 +361,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -334,11 +369,11 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-14.405705,-7.6140545)">
+     transform="translate(-14.405705,-7.6140556)">
     <rect
-       style="opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.47771168;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       style="opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.49443182;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        id="rect1014"
-       width="192.351"
+       width="206.05139"
        height="53.794472"
        x="14.405705"
        y="7.6140556" />
@@ -465,30 +500,21 @@
          y="60.73119"
          x="114.20915"
          sodipodi:role="line">(Ignition =&gt; ROS 2)</tspan></text>
-    <path
-       sodipodi:nodetypes="ccc"
-       inkscape:original-d="m 95.727437,26.536241 c 18.066543,-3.09e-4 36.132523,-3.54e-4 54.198823,-1.34e-4 2.6e-4,11.072911 2.6e-4,22.145735 0,33.219"
-       inkscape:path-effect="#path-effect2904"
-       inkscape:connector-curvature="0"
-       id="path2902"
-       d="m 95.727437,26.536241 c 18.066543,-4.5e-5 36.132523,-8.9e-5 45.165673,5.536344 9.03315,5.536433 9.03315,16.609257 9.03315,27.682522"
-       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker3617)"
-       transform="translate(35.907738,-14.174107)" />
     <text
        id="text3477"
-       y="14.923179"
-       x="190.95291"
+       y="22.406725"
+       x="149.70056"
        style="font-style:normal;font-weight:normal;font-size:7.05555534px;line-height:0.5;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
          id="tspan3473"
          style="font-size:4.23333311px;line-height:0.5;stroke-width:0.26458332"
-         y="14.923179"
-         x="190.95291"
+         y="22.406725"
+         x="149.70056"
          sodipodi:role="line">/joint_trajectory</tspan><tspan
          id="tspan3475"
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
-         y="18.549381"
-         x="190.95291"
+         y="26.032928"
+         x="149.70056"
          sodipodi:role="line">(ROS 2 =&gt; Ignition)</tspan></text>
     <path
        transform="translate(-73.610863,-16.630952)"
@@ -550,5 +576,39 @@
          y="22.920649"
          x="30.900843"
          sodipodi:role="line">(Python : action result)</tspan></text>
+    <path
+       transform="matrix(-1,0,0,1,295.54095,-16.636777)"
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4466-5)"
+       d="m 163.89976,30.599351 c -13.98098,0 -27.962,0 -34.95287,5.268719 -6.99087,5.268719 -6.99087,15.806083 -6.99087,26.343882"
+       id="path4460-6"
+       inkscape:connector-curvature="0"
+       inkscape:path-effect="#path-effect4462-5"
+       inkscape:original-d="m 163.89976,30.599351 c -13.98098,-2.65e-4 -27.962,-2.65e-4 -41.94374,0 2.6e-4,10.537438 2.6e-4,21.074802 0,31.612601"
+       sodipodi:nodetypes="ccc" />
+    <path
+       sodipodi:nodetypes="ccc"
+       inkscape:original-d="m 124.12928,65.95237 c 2.6e-4,-12.288595 2.6e-4,-24.576732 0,-36.864996 15.28638,-2.65e-4 30.57202,-2.65e-4 45.85764,0"
+       inkscape:path-effect="#path-effect7326-7"
+       inkscape:connector-curvature="0"
+       id="path7324-2"
+       d="m 124.12928,65.95237 c 0,-12.288595 0,-24.576732 7.64319,-30.720864 7.64319,-6.144132 22.92883,-6.144132 38.21445,-6.144132"
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker7330-3)"
+       transform="matrix(-1,0,0,1,302.62801,-19.377104)" />
+    <text
+       id="text3477-9"
+       y="13.180042"
+       x="194.79257"
+       style="font-style:normal;font-weight:normal;font-size:7.05555534px;line-height:0.5;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       xml:space="preserve"><tspan
+         id="tspan3473-1"
+         style="font-size:4.23333311px;line-height:0.5;stroke-width:0.26458332"
+         y="13.180042"
+         x="194.79257"
+         sodipodi:role="line">/joint_trajectory_feedback</tspan><tspan
+         id="tspan3475-2"
+         style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
+         y="16.806246"
+         x="194.79257"
+         sodipodi:role="line">(Ignition =&gt; ROS 2)</tspan></text>
   </g>
 </svg>
