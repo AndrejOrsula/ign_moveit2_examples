@@ -562,17 +562,26 @@ class MoveIt2Interface(Node):
 
         return joint_trajectory
 
-    def gripper_close(self, width=0.0, speed=0.2, force=20.0) -> bool:
+    def gripper_close(self, width=0.0, speed=0.2, force=20.0, force_start=0.75) -> bool:
         """
-        Close gripper.
+        Close gripper. Argument `force_start` (0.0,1.0] can be used to indicate point of the
+        trajectory at which force will start being applied.
         """
         joint_trajectory = self.gripper_plan_path(width, speed)
 
         if not joint_trajectory.points:
             return False
 
-        # Set the desired force on the last point
-        joint_trajectory.points[-1].effort = [-force, -force]
+        # Start slowly applying force in the last (1-force_start)% of the trajectory
+        force_index_end = len(joint_trajectory.points)
+        force_index_start = round(force_start*force_index_end)
+        force_range = force_index_end - force_index_start
+        for i in range(force_index_start, force_index_end):
+            # Scale the applied force linearly with the index
+            scaling_factor = ((i+1)-force_index_start) / force_range
+            applied_force = scaling_factor * force
+            # Closing direction is in negative directions
+            joint_trajectory.points[i].effort = [-applied_force, -applied_force]
 
         return self.execute(joint_trajectory)
 
