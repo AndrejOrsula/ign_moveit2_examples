@@ -737,9 +737,9 @@ bool Trajectory::UpdateCurrentPoint(const std::chrono::steady_clock::duration &_
     }
 
     // Break if point needs to be followed
-    const auto pointTSF = this->points[this->pointIndex].time_from_start();
-    const auto pointTime = std::chrono::seconds(pointTSF.sec()) +
-                           std::chrono::nanoseconds(pointTSF.nsec());
+    const auto pointTFS = this->points[this->pointIndex].time_from_start();
+    const auto pointTime = std::chrono::seconds(pointTFS.sec()) +
+                           std::chrono::nanoseconds(pointTFS.nsec());
     if (pointTime >= trajectoryTime)
     {
       break;
