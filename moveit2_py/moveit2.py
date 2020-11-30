@@ -298,21 +298,48 @@ class MoveIt2Interface(Node):
         # self.kinematic_path_request.motion_plan_request.reference_trajectories = "Ignored"
         # self.kinematic_path_request.motion_plan_request.planner_id = "Ignored"
         self.kinematic_path_request.motion_plan_request.group_name = self.arm_group_name
-        # TODO: Make configurable
-        self.kinematic_path_request.motion_plan_request.num_planning_attempts = 10
-        # TODO: Make configurable
-        self.kinematic_path_request.motion_plan_request.allowed_planning_time = 5.0
+        # self.kinematic_path_request.motion_plan_request.num_planning_attempts = \
+        # "Set during request"
+        # self.kinematic_path_request.motion_plan_request.allowed_planning_time = \
+        # "Set during request"
         self.kinematic_path_request.motion_plan_request.max_velocity_scaling_factor = 0.0
         self.kinematic_path_request.motion_plan_request.max_acceleration_scaling_factor = 0.0
         self.kinematic_path_request.motion_plan_request.cartesian_speed_end_effector_link = \
             self.arm_end_effector
         self.kinematic_path_request.motion_plan_request.max_cartesian_speed = 0.0
 
-    def plan_kinematic_path(self) -> GetMotionPlan.Response:
+    def set_max_velocity(self, scaling_factor):
+        """
+        Set maximum velocity of joints as a factor of joint limits.
+        """
+        self.kinematic_path_request.motion_plan_request.max_velocity_scaling_factor = scaling_factor
+
+    def set_max_acceleration(self, scaling_factor):
+        """
+        Set maximum acceleration of joints as a factor of joint limits.
+        """
+        self.kinematic_path_request.motion_plan_request.max_acceleration_scaling_factor = \
+            scaling_factor
+
+    def set_max_cartesian_speed(self, speed):
+        """
+        Set maximum cartesian speed of end effector.
+        """
+        self.kinematic_path_request.motion_plan_request.max_cartesian_speed = speed
+
+    def plan_kinematic_path(self,
+                            allowed_planning_time=5.0,
+                            num_planning_attempts=10) -> GetMotionPlan.Response:
         """
         Call `plan_kinematic_path` service, with goal set using either `set_joint_goal()`,
         `set_position_goal()`, `set_orientation_goal()` or `set_pose_goal()`.
         """
+
+        self.kinematic_path_request.motion_plan_request.num_planning_attempts = \
+            num_planning_attempts
+        self.kinematic_path_request.motion_plan_request.allowed_planning_time = \
+            allowed_planning_time
+
         self.kinematic_path_request.motion_plan_request.workspace_parameters.header.stamp = \
             self._clock.now().to_msg()
 
