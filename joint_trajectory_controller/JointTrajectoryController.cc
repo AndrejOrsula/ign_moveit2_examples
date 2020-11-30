@@ -574,7 +574,7 @@ ActuatedJoint::ActuatedJoint(const Entity &_entity,
   this->entity = _entity;
 
   this->initialPosition = GetNthOrDefault(ParseVectorParam<double>(
-                                              _sdf->Get<std::string>("initial_joint_positions")),
+                                              _sdf->Get<std::string>("initial_positions")),
                                           _jointIndex, 0.0);
   this->target.position = this->initialPosition;
   this->target.velocity = 0.0;

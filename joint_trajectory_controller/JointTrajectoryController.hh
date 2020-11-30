@@ -52,7 +52,7 @@ namespace ignition
         ///  Separate values by whitespace (e.g. "panda_joint1 panda_joint2 ...")
         ///  Defaults to all joints contained in SDF with their respective order.
         ///
-        /// `<initial_joint_positions>` Initial joint positions. Optional parameter.
+        /// `<initial_positions>` Initial joint positions. Optional parameter.
         ///  Separate values by whitespace (e.g. "0 1.57 ..."). Follows `joint_names` order.
         ///  Defaults to 0 to all joints.
         ///
