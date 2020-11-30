@@ -359,19 +359,6 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
         this->dataPtr->trajectory.status = Trajectory::Reached;
       }
 
-      // Reset PID errors of the joints affected by the new trajectory
-      for (const auto &jointName : this->dataPtr->trajectory.jointNames)
-      {
-        if (this->dataPtr->actuatedJoints.count(jointName) == 0)
-        {
-          ignwarn << "[JointTrajectoryController] Trajectory contains unconfigured joint ["
-                  << jointName << "].\n";
-          continue;
-        }
-        auto *joint = &this->dataPtr->actuatedJoints[jointName];
-        joint->ResetPIDs();
-      }
-
       // Update is always needed for a new trajectory
       isTargetUpdateRequired = true;
     }
@@ -402,6 +389,9 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
         }
         auto *joint = &this->dataPtr->actuatedJoints[jointName];
         joint->SetTarget(targetPoint, jointIndex);
+
+        // Reset also the PID error of the affected joints
+        joint->ResetPIDs();
       }
 
       // If there are no more points after the current one, set the trajectory to Reached
