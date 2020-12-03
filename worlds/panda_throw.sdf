@@ -213,7 +213,7 @@
                         </sphere>
                     </geometry>
                 </collision>
-                <visual name="box_visual">
+                <visual name="throwing_object_visual">
                     <geometry>
                         <sphere>
                             <radius>0.025</radius>
