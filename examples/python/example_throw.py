@@ -71,7 +71,7 @@ class Thrower(Node):
         self.moveit2_.wait_until_executed()
 
         # Close gripper
-        self.moveit2_.gripper_close(width=0.05, speed=0.01, force=20.0)
+        self.moveit2_.gripper_close(width=0.05, speed=0.2, force=20.0)
         self.moveit2_.wait_until_executed()
 
         # Move above object again
