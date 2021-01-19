@@ -30,7 +30,9 @@ Examples for control of [Franka Emika Panda](https://github.com/AndrejOrsula/pan
 - [ROS 2 Foxy](https://index.ros.org/doc/ros2/Installation/Foxy)
 - [MoveIt2](https://moveit.ros.org/install-moveit2/source)
 - [Ignition Dome](https://ignitionrobotics.org/docs/dome/install)
-  - For `ign-msgs`, you need to use [AndrejOrsula/ign-msgs - add_joint_trajectory](https://github.com/AndrejOrsula/ign-msgs/tree/add_joint_trajectory) as it contains the required `ign_msgs.JointTrajectory`.
+  - `ign-msgs` >= 6.2
+- [ros_ign](https://github.com/ignitionrobotics/ros_ign/tree/ros2)
+  - `ros2` branch with <https://github.com/ignitionrobotics/ros_ign/pull/121>
 
 All other dependencies are pulled from git ([ign_moveit2.repos](ign_moveit2.repos)) and built automatically with this repository.
 
@@ -44,7 +46,6 @@ mkdir -p ign_moveit2/src && cd ign_moveit2/src
 git clone https://github.com/AndrejOrsula/ign_moveit2.git -b joint_trajectory_controller
 vcs import < ign_moveit2/ign_moveit2.repos
 cd ..
-export IGNITION_VERSION=dome
 rosdep install --from-paths src -i -y --rosdistro ${ROS_DISTRO}
 colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
 ```
