@@ -167,7 +167,7 @@
 
         <!-- Panda -->
         <include>
-            <uri>https://fuel.ignitionrobotics.org/1.0/AndrejOrsula/models/panda/1</uri>
+            <uri>https://fuel.ignitionrobotics.org/1.0/AndrejOrsula/models/panda</uri>
             <pose>0 0 0 0 0 0</pose>
 
             <!-- Joint state publisher -->
