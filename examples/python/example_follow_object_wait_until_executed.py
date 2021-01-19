@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-
+from geometry_msgs.msg import Pose
 from moveit2 import MoveIt2Interface
-
-from geometry_msgs.msg import Pose, Point, Quaternion
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rclpy.node import Node
+import rclpy
 
 
 class ObjectFollower(Node):

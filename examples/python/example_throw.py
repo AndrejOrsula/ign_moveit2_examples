@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-
+from geometry_msgs.msg import Pose
 from moveit2 import MoveIt2Interface
-
+from rclpy.node import Node
+import rclpy
 import time
-
-
-from geometry_msgs.msg import Pose, Point, Quaternion
-from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-
-from scipy.spatial.transform import Rotation
 
 
 class Thrower(Node):
@@ -48,9 +40,7 @@ class Thrower(Node):
         # Move above object
         position = [object_position.x,
                     object_position.y, object_position.z + 0.1]
-        quaternion = Rotation.from_euler('xyz',
-                                         [180, 0, 0],
-                                         degrees=True).as_quat()
+        quaternion = [1.0, 0.0, 0.0, 0.0]
         self.moveit2_.set_pose_goal(position, quaternion)
         self.moveit2_.plan_kinematic_path()
         self.moveit2_.execute()
@@ -62,9 +52,7 @@ class Thrower(Node):
         # Move to grasp position
         position = [object_position.x,
                     object_position.y, object_position.z]
-        quaternion = Rotation.from_euler('xyz',
-                                         [180, 0, 0],
-                                         degrees=True).as_quat()
+        quaternion = [1.0, 0.0, 0.0, 0.0]
         self.moveit2_.set_pose_goal(position, quaternion)
         self.moveit2_.plan_kinematic_path()
         self.moveit2_.execute()
@@ -77,9 +65,7 @@ class Thrower(Node):
         # Move above object again
         position = [object_position.x,
                     object_position.y, object_position.z + 0.1]
-        quaternion = Rotation.from_euler('xyz',
-                                         [180, 0, 0],
-                                         degrees=True).as_quat()
+        quaternion = [1.0, 0.0, 0.0, 0.0]
         self.moveit2_.set_pose_goal(position, quaternion)
         self.moveit2_.plan_kinematic_path()
         self.moveit2_.execute()

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-
+from geometry_msgs.msg import Pose
 from moveit2 import MoveIt2Interface
-
-from geometry_msgs.msg import Pose, Point, Quaternion
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rclpy.node import Node
+import rclpy
 
 
 class ObjectFollower(Node):
@@ -32,12 +29,13 @@ class ObjectFollower(Node):
         # Process if object was moved
         if self.previous_object_pose_ != pose_msg:
             # Compute IK for the current pose of the object
-            joint_state = self.moveit2_.compute_ik(pose_msg).solution.joint_state
+            joint_state = self.moveit2_.compute_ik(
+                pose_msg).solution.joint_state
             # Move to this computed configuration, if possible
             self.moveit2_.move_to_joint_state(joint_state,
-                                            set_position=True,
-                                            set_velocity=False,
-                                            set_effort=False)
+                                              set_position=True,
+                                              set_velocity=False,
+                                              set_effort=False)
 
 
 def main(args=None):

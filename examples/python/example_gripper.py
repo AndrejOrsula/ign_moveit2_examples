@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import threading
-
-import rclpy
 from moveit2 import MoveIt2Interface
-
-from scipy.spatial.transform import Rotation
+import rclpy
+import threading
 
 
 def main(args=None):

@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import threading
-
-import rclpy
 from moveit2 import MoveIt2Interface
-
-from scipy.spatial.transform import Rotation
+import rclpy
+import threading
 
 
 def main(args=None):
@@ -22,9 +19,7 @@ def main(args=None):
 
     # Set pose goal to reach
     position = [0.25, 0.25, 0.5]
-    quaternion = Rotation.from_euler('xyz',
-                                     [180, 0, 0],
-                                     degrees=True).as_quat()
+    quaternion = [1.0, 0.0, 0.0, 0.0]
     moveit2.set_pose_goal(position, quaternion)
 
     # Plan and execute
