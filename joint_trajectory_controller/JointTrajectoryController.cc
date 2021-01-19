@@ -1,21 +1,39 @@
+/*
+ * Copyright (C) 2021 Open Source Robotics Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <ignition/common/Profiler.hh>
 #include <ignition/plugin/Register.hh>
 
-#include <ignition/gazebo/Model.hh>
-#include <ignition/gazebo/components/ParentEntity.hh>
-#include <ignition/gazebo/components/Name.hh>
 #include <ignition/gazebo/components/Joint.hh>
-#include <ignition/gazebo/components/JointType.hh>
-#include <ignition/gazebo/components/JointPosition.hh>
-#include <ignition/gazebo/components/JointVelocity.hh>
 #include <ignition/gazebo/components/JointForceCmd.hh>
+#include <ignition/gazebo/components/JointPosition.hh>
+#include <ignition/gazebo/components/JointType.hh>
+#include <ignition/gazebo/components/JointVelocity.hh>
+#include <ignition/gazebo/components/Name.hh>
+#include <ignition/gazebo/components/ParentEntity.hh>
+#include <ignition/gazebo/Model.hh>
 
 #include <ignition/math/PID.hh>
 
+#include <ignition/msgs/float.pb.h>
+#include <ignition/msgs/joint_trajectory.pb.h>
 #include <ignition/transport/Node.hh>
 #include <ignition/transport/Publisher.hh>
-#include <ignition/msgs/joint_trajectory.pb.h>
-#include <ignition/msgs/float.pb.h>
+#include <ignition/transport/TopicUtils.hh>
 
 #include "JointTrajectoryController.hh"
 
@@ -23,47 +41,128 @@ using namespace ignition;
 using namespace gazebo;
 using namespace systems;
 
+/// \brief Helper class that contains all parameters required to create and configure an instance of 
+/// ActuatedJoint
+class JointParameters
+{
+  /// \brief Parse all parameters required for creation of ActuatedJoint and return them in a map
+  /// \param[in] _sdf SDF reference used to obtain the parameters
+  /// \param[in] _ecm Ignition Entity Component Manager
+  /// \param[in] _enabledJoints List of joint entities that are enabled and need to be created
+  /// \return Map of parameters for each joint, the first entry of pair indicates the joint name
+  public: static std::map<std::string, JointParameters> ParseAll(
+              const std::shared_ptr<const sdf::Element> &_sdf,
+              ignition::gazebo::EntityComponentManager &_ecm,
+              std::vector<Entity> _enabledJoints);
+
+  /// \brief Parse all values of a single parameter that is specified multiple times in SDF
+  /// \param[in] _sdf SDF reference used to obtain the parameters
+  /// \param[in] _parameterName Name of the repeated parameter to parse all values for
+  /// \return Ordered list of all values for a given repeated parameter
+  public: template <typename T> static std::vector<T> Parse(
+                                    const std::shared_ptr<const sdf::Element> &_sdf,
+                                    const std::string &_parameterName);
+
+  /// \brief Return value from `_vec` at `_index`, or `_alternative_value` if `_vec` is not large
+  /// enough
+  /// \param[in] _vec Vector that contains desired value of type T
+  /// \param[in] _index Index at which the value is stored
+  /// \param[in] _alternative_value Alternative or default value of type T
+  /// \return Value from `_vec` at `_index`, or `_alternative_value` if `_vec` is not large enough
+  public: template <typename T> static T NthElementOr(const std::vector<T> &_vec,
+                                                      const size_t &_index,
+                                                      const T &_alternative_value);
+
+  /// \brief Initial position of the joint
+  public: double initialPosition;
+  /// \brief Default value for initial position of the joint
+  public: static constexpr double initialPositionDefault = 0.0;
+
+  /// \brief Parameters required for creation of new PID controller
+  public: struct PID
+  {
+    /// \brief Proportional gain
+    double pGain;
+    /// \brief Default value for proportional gain
+    static constexpr double pGainDefault = 0.0;
+
+    /// \brief Integral gain
+    double iGain;
+    /// \brief Default value for integral gain
+    static constexpr double iGainDefault = 0.0;
+
+    /// \brief Derivative gain
+    double dGain;
+    /// \brief Default value for derivative gain
+    static constexpr double dGainDefault = 0.0;
+
+    /// \brief Integral lower limit
+    double iMin;
+    /// \brief Default value for integral lower limit
+    static constexpr double iMinDefault = 0.0;
+
+    /// \brief Integral upper limit
+    double iMax;
+    /// \brief Default value for integral upper limit
+    static constexpr double iMaxDefault = -1.0;
+
+    /// \brief Output min value
+    double cmdMin;
+    /// \brief Default value for output min value
+    static constexpr double cmdMinDefault = 0.0;
+
+    /// \brief Output max value
+    double cmdMax;
+    /// \brief Default value for output max value
+    static constexpr double cmdMaxDefault = -1.0;
+
+    /// \brief Output offset
+    double cmdOffset;
+    /// \brief Default value for output offset
+    static constexpr double cmdOffsetDefault = 0.0;
+  } positionPID, velocityPID;
+};
+
 /// \brief A single 1-axis joint that is controlled by JointTrajectoryController plugin
 class ActuatedJoint
 {
-public:
   /// \brief Default contructor
-  ActuatedJoint() = default;
+  public: ActuatedJoint() = default;
 
-  /// \brief Constructor that is aware of SDF configuration
+  /// \brief Constructor that properly configures the actuated joint
   /// \param[in] _entity Entity of the joint
-  /// \param[in] _sdf SDF reference used to obtain configuration for this joint
-  /// \param[in] _jointIndex Index of the joint, used to determine what SDF parameters belong to it
-  ActuatedJoint(const Entity &_entity,
-                const std::shared_ptr<const sdf::Element> &_sdf,
-                const size_t &_jointIndex);
+  /// \param[in] _params All parameters of the joint required for its configuration
+  public: ActuatedJoint(const Entity &_entity,
+                        const JointParameters &_params);
 
   /// \brief Setup components required for control of this joint
   /// \param[in,out] _ecm Ignition Entity Component Manager
-  /// \return True if setup was successful, False if any of the components could not be created
-  bool SetupComponents(ignition::gazebo::EntityComponentManager &_ecm) const;
+  public: void SetupComponents(ignition::gazebo::EntityComponentManager &_ecm) const;
 
-  /// \brief Set target of the joint that the controller will attemp to reach
+  /// \brief Set target of the joint that the controller will attempt to reach
   /// \param[in] _targetPoint Targets of all controlled joint
   /// \param[in] _jointIndex Index of the joint, used to determine what index of `_targetPoint`
   /// to use
-  void SetTarget(const ignition::msgs::JointTrajectoryPoint &_targetPoint,
-                 const size_t &_jointIndex);
+  public: void SetTarget(const ignition::msgs::JointTrajectoryPoint &_targetPoint,
+                         const size_t &_jointIndex);
 
   /// \brief Update command force that is applied on the joint
   /// \param[in,out] _ecm Ignition Entity Component Manager
   /// \param[in] _dt Time difference to update for
-  void Update(ignition::gazebo::EntityComponentManager &_ecm,
-              const std::chrono::steady_clock::duration &_dt);
+  public: void Update(ignition::gazebo::EntityComponentManager &_ecm,
+                      const std::chrono::steady_clock::duration &_dt);
+
+  /// \brief Reset the target of the joint
+  public: void ResetTarget();
 
   /// \brief Reset the position and velocity PID error on the joint
-  void ResetPIDs();
+  public: void ResetPIDs();
 
   /// \brief Entity of the joint
-  Entity entity;
+  public: Entity entity;
 
   /// \brief Target state that the joint controller should reach
-  struct TargetState
+  public: struct TargetState
   {
     /// \brief Target position of the joint
     double position;
@@ -77,10 +176,10 @@ public:
   } target;
 
   /// \brief Initial position of the joint
-  double initialPosition;
+  public: double initialPosition;
 
   /// \brief List of PID controllers used for the control of this actuated joint
-  struct PIDs
+  public: struct PIDs
   {
     /// \brief Position PID controller
     ignition::math::PID position;
@@ -92,27 +191,26 @@ public:
 /// \brief Information about trajectory that is followed by JointTrajectoryController plugin
 class Trajectory
 {
-public:
   /// \brief Update index of trajectory points, such that it directs to a point that needs to be
   /// currently followed
   /// \param[in] _simTime Current simulation time
   /// \return True if index of the trajectory point was updated, False otherwise
-  bool UpdateCurrentPoint(const std::chrono::steady_clock::duration &_simTime);
+  public: bool UpdateCurrentPoint(const std::chrono::steady_clock::duration &_simTime);
 
   /// \brief Determine if the trajectory goal was reached
   /// \return True if trajectory goal was reached, False otherwise
-  bool IsGoalReached() const;
+  public: bool IsGoalReached() const;
 
   /// \brief Compute progress of the current trajectory
-  /// \return Fraction of the completed points in range [0.0, 1.0]
-  float ComputeProgress() const;
+  /// \return Fraction of the completed points in range (0.0, 1.0]
+  public: float ComputeProgress() const;
 
   /// \brief Reset trajectory internals, i.e. clean list of joint names, points and reset index
   /// of the current point
-  void Reset();
+  public: void Reset();
 
   /// \brief Status of the trajectory
-  enum TrajectoryStatus
+  public: enum TrajectoryStatus
   {
     /// \brief Trajectory is new and needs to be configure on the next update loop
     New,
@@ -123,146 +221,111 @@ public:
   } status;
 
   /// \brief Start time of trajectory
-  std::chrono::steady_clock::duration startTime;
+  public: std::chrono::steady_clock::duration startTime;
 
   /// \brief Index of the current trajectory point
-  unsigned int pointIndex;
+  public: unsigned int pointIndex;
 
   /// \brief Ordered joints that need to be actuated to follow the current trajectory
-  std::vector<std::string> jointNames;
+  public: std::vector<std::string> jointNames;
 
   /// \brief Trajectory defined in terms of temporal points, whose members are ordered according
   /// to `jointNames`
-  std::vector<ignition::msgs::JointTrajectoryPoint> points;
+  public: std::vector<ignition::msgs::JointTrajectoryPoint> points;
 };
 
 /// \brief Private data of the JointTrajectoryController plugin
 class ignition::gazebo::systems::JointTrajectoryControllerPrivate
 {
-public:
+  /// \brief Get a list of enabled, unique, 1-axis joints of the model. If no joint names are
+  /// specified in the plugin configuration, all valid 1-axis joints are returned
+  /// \param[in] _entity Entity of the model that the plugin is being configured for
+  /// \param[in] _sdf SDF reference used to determine enabled joints
+  /// \param[in] _ecm Ignition Entity Component Manager
+  /// \return List of entities containinig all enabled joints
+  public: std::vector<Entity> GetEnabledJoints(const Entity &_entity,
+                                               const std::shared_ptr<const sdf::Element> &_sdf,
+                                               EntityComponentManager &_ecm) const;
+
   /// \brief Callback for joint trajectory subscription
   /// \param[in] _msg A new message describing a joint trajectory that needs to be followed
-  void JointTrajectoryCallback(const ignition::msgs::JointTrajectory &_msg);
-
-  /// \brief Configure a single joint so that it can be actuated to follow a trajectory
-  /// \param[in] _entity Entity of the joint
-  /// \param[in] _sdf SDF reference used to obtain configuration for this joint
-  /// \param[in] _ecm Ignition Entity Component Manager
-  /// \param[in] _enabledJoints List of all joints that should be enabled based on SDF configuration
-  void ConfigureJoint(const Entity &_entity,
-                      const std::shared_ptr<const sdf::Element> &_sdf,
-                      const ignition::gazebo::EntityComponentManager &_ecm,
-                      const std::vector<std::string> &_enabledJoints);
+  public: void JointTrajectoryCallback(const ignition::msgs::JointTrajectory &_msg);
 
   /// \brief Reset internals of the plugin, without affecting already created components
-  void Reset();
+  public: void Reset();
 
   /// \brief Ignition communication node
-  transport::Node node;
+  public: transport::Node node;
 
   /// \brief Publisher of the progress for currently followed trajectory
-  transport::Node::Publisher progressPub;
+  public: transport::Node::Publisher progressPub;
 
-  /// \brief Map of actuated joints, where first is the name of the joint
-  std::map<std::string, ActuatedJoint> actuatedJoints;
+  /// \brief Map of actuated joints, where the first entry of pair is the name of the joint
+  public: std::map<std::string, ActuatedJoint> actuatedJoints;
 
   /// \brief Mutex projecting trajectory
-  std::mutex trajectoryMutex;
+  public: std::mutex trajectoryMutex;
 
   /// \brief Information about trajectory that should be followed
-  Trajectory trajectory;
+  public: Trajectory trajectory;
 
   /// \brief Flag that determines whether to use message header timestamp as the trajectory start,
   /// where simulation time at the beginning of execution is used otherwise
-  bool useHeaderStartTime;
+  public: bool useHeaderStartTime;
 
-  /// \brief Flag that determines if all compenents required for control are already setup
-  bool componentSetupFinished;
+  /// \brief Flag that determines if all components required for control are already setup
+  public: bool componentSetupFinished;
 };
-
-////////////////////////
-/// Helper Functions ///
-////////////////////////
-
-/// \brief Parse separated parameters from a string
-/// \param[in] _input A string that has multiple separated parameters, e.g. with whitespace
-/// \return Vector of all T-typed parameters contained in the input
-template <typename T>
-std::vector<T> ParseVectorParam(const std::string &_input)
-{
-  std::istringstream iss(_input);
-  std::vector<T> output;
-  T value;
-
-  while (iss >> value)
-  {
-    output.push_back(value);
-  }
-  return output;
-}
-
-/// \brief Return value from `_vec` at `_index`, or `_default` if `_vec` is not large enough
-/// \param[in] _vec Vector that contains desired value of type T
-/// \param[in] _index Index at which the value is stored
-/// \param[in] _default Default value of type T
-/// \return Value from `_vec` at `_index`, or `_default` if `_vec` is not large enough
-template <typename T>
-T GetNthOrDefault(const std::vector<T> &_vec,
-                  const size_t &_index,
-                  const T &_default)
-{
-  if (_index < _vec.size())
-  {
-    return _vec[_index];
-  }
-  else
-  {
-    return _default;
-  }
-}
 
 /////////////////////////////////
 /// JointTrajectoryController ///
 /////////////////////////////////
 
+//////////////////////////////////////////////////
 JointTrajectoryController::JointTrajectoryController()
     : dataPtr(std::make_unique<JointTrajectoryControllerPrivate>())
 {
 }
 
+//////////////////////////////////////////////////
 void JointTrajectoryController::Configure(const Entity &_entity,
                                           const std::shared_ptr<const sdf::Element> &_sdf,
                                           EntityComponentManager &_ecm,
                                           EventManager & /*_eventManager*/)
 {
-  // Make sure the controller is attached to a valid plugin
+  // Make sure the controller is attached to a valid model
   const auto model = Model(_entity);
   if (!model.Valid(_ecm))
   {
     ignerr << "[JointTrajectoryController] Failed to initialize because [" << model.Name(_ecm)
            << "(Entity=" << _entity << ")] is not a model. Please make sure that"
-                                       "JointTrajectoryController is attached to a valid model.\n";
+                                       " JointTrajectoryController is attached to a valid model.\n";
     return;
   }
   ignmsg << "[JointTrajectoryController] Setting up controller for [" << model.Name(_ecm)
          << "(Entity=" << _entity << ")].\n";
 
   // Get list of enabled joints
-  // If empty, enable all joints
-  const auto enabledJoints = ParseVectorParam<std::string>(_sdf->Get<std::string>("joint_names"));
+  const auto enabledJoints = this->dataPtr->GetEnabledJoints(_entity, _sdf, _ecm);
 
-  // Iterate over all joints under the model entity and configure them
-  for (const auto &jointEntity : _ecm.ChildrenByComponents(_entity, components::Joint()))
+  // For each enabled joint, parse all of its parameters from SDF
+  auto jointParameters = JointParameters::ParseAll(_sdf, _ecm, enabledJoints);
+
+  // Iterate over all enabled joints and create/configure them
+  for (const auto &jointEntity : enabledJoints)
   {
-    this->dataPtr->ConfigureJoint(jointEntity, _sdf, _ecm, enabledJoints);
+    const auto jointName = _ecm.Component<components::Name>(jointEntity)->Data();
+    this->dataPtr->actuatedJoints[jointName] = ActuatedJoint(jointEntity,
+                                                             jointParameters[jointName]);
+    ignmsg << "[JointTrajectoryController] Configured joint [" << jointName << "(Entity="
+           << jointEntity << ")].\n";
   }
 
   // Make sure at least one joint is configured
   if (this->dataPtr->actuatedJoints.empty())
   {
     ignerr << "[JointTrajectoryController] Failed to initialize because [" << model.Name(_ecm)
-           << "(Entity=" << _entity
-           << ")] has no supported joints.\n";
+           << "(Entity=" << _entity << ")] has no supported joints.\n";
     return;
   }
 
@@ -280,29 +343,32 @@ void JointTrajectoryController::Configure(const Entity &_entity,
   auto trajectoryTopic = _sdf->Get<std::string>("topic");
   if (trajectoryTopic.empty())
   {
+    // If not specified, use the default topic based on model name
     trajectoryTopic = "/model/" + model.Name(_ecm) + "/joint_trajectory";
-    ignmsg << "[JointTrajectoryController] No topic specified for joint trajectories,"
-              "defaulting to ["
-           << trajectoryTopic << "].\n";
   }
-  else
+  // Make sure the topic is valid
+  const auto validTrajectoryTopic = transport::TopicUtils::AsValidTopic(trajectoryTopic);
+  if (validTrajectoryTopic.empty())
   {
-    if (trajectoryTopic[0] != '/')
-    {
-      trajectoryTopic.insert(0, "/");
-    }
-    ignmsg << "[JointTrajectoryController] Joint trajectory topic set to ["
-           << trajectoryTopic << "].\n";
+    ignerr << "[JointTrajectoryController] Cannot subscribe to invalid topic [" << trajectoryTopic
+           << "].\n";
+    return;
   }
-  this->dataPtr->node.Subscribe(trajectoryTopic,
+  // Subscribe
+  ignmsg << "[JointTrajectoryController] Subscribing to joint trajectory commands on topic ["
+         << validTrajectoryTopic << "].\n";
+  this->dataPtr->node.Subscribe(validTrajectoryTopic,
                                 &JointTrajectoryControllerPrivate::JointTrajectoryCallback,
                                 this->dataPtr.get());
 
   // Advertise progress
-  const auto progressTopic = trajectoryTopic + "_progress";
+  const auto progressTopic = validTrajectoryTopic + "_progress";
+  ignmsg << "[JointTrajectoryController] Advertising joint trajectory progress on topic ["
+         << progressTopic << "].\n";
   this->dataPtr->progressPub = this->dataPtr->node.Advertise<ignition::msgs::Float>(progressTopic);
 }
 
+//////////////////////////////////////////////////
 void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_info,
                                           ignition::gazebo::EntityComponentManager &_ecm)
 {
@@ -314,10 +380,7 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
     for (auto &actuatedJoint : this->dataPtr->actuatedJoints)
     {
       ActuatedJoint *joint = &actuatedJoint.second;
-      if (!joint->SetupComponents(_ecm))
-      {
-        return;
-      }
+      joint->SetupComponents(_ecm);
     }
     this->dataPtr->componentSetupFinished = true;
   }
@@ -389,9 +452,6 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
         }
         auto *joint = &this->dataPtr->actuatedJoints[jointName];
         joint->SetTarget(targetPoint, jointIndex);
-
-        // Reset also the PID error of the affected joints
-        joint->ResetPIDs();
       }
 
       // If there are no more points after the current one, set the trajectory to Reached
@@ -419,81 +479,106 @@ void JointTrajectoryController::PreUpdate(const ignition::gazebo::UpdateInfo &_i
 /// JointTrajectoryControllerPrivate ///
 ////////////////////////////////////////
 
-void JointTrajectoryControllerPrivate::ConfigureJoint(const Entity &_entity,
-                                                      const std::shared_ptr<const sdf::Element> &_sdf,
-                                                      const ignition::gazebo::EntityComponentManager &_ecm,
-                                                      const std::vector<std::string> &_enabledJoints)
+//////////////////////////////////////////////////
+std::vector<Entity> JointTrajectoryControllerPrivate::GetEnabledJoints(
+    const Entity &_entity,
+    const std::shared_ptr<const sdf::Element> &_sdf,
+    EntityComponentManager &_ecm) const
 {
-  const auto jointName = _ecm.Component<components::Name>(_entity)->Data();
-  auto jointIndex = this->actuatedJoints.size();
+  std::vector<Entity> output;
 
-  // Ignore duplicate joints
-  for (const auto &actuatedJoint : this->actuatedJoints)
+  // Get list of user-enabled joint names. If empty, enable all 1-axis joints
+  const auto enabledJoints = JointParameters::Parse<std::string>(_sdf, "joint_name");
+
+  // Get list of joint entities of the model
+  // If there are joints explicitely enabled by the user, get only those
+  std::vector<Entity> jointEntities;
+  if (!enabledJoints.empty())
   {
-    if (actuatedJoint.second.entity == _entity)
+    for (const auto &enabledJointName : enabledJoints)
     {
-      ignwarn << "[JointTrajectoryController] Ignoring duplicate joint [" << jointName << "(Entity="
-              << _entity << ")]\".\n";
-      continue;
+      auto enabledJointEntity = _ecm.ChildrenByComponents(_entity,
+                                                          components::Joint(),
+                                                          components::Name(enabledJointName));
+      // Check that model has exactly one joint that matches the name
+      if (enabledJointEntity.empty())
+      {
+        ignerr << "[JointTrajectoryController] Model does not contain joint [" << enabledJointName
+               << "], which was explicitly enabled.\n";
+        continue;
+      }
+      else if (enabledJointEntity.size() > 1)
+      {
+        ignwarn << "[JointTrajectoryController] Model has " << enabledJointEntity.size()
+                << " duplicate joints named [" << enabledJointName << "]. Only the first (Entity="
+                << enabledJointEntity[0] << ") will be configured.\n";
+      }
+      // Add entity to the list of enabled joints
+      jointEntities.push_back(enabledJointEntity[0]);
     }
   }
-
-  // Make sure the joint type is supported, i.e. it has a single actuated axis
-  const auto *jointType = _ecm.Component<components::JointType>(_entity);
-  switch (jointType->Data())
+  else
   {
-  case sdf::JointType::PRISMATIC:
-  case sdf::JointType::REVOLUTE:
-  case sdf::JointType::CONTINUOUS:
-  case sdf::JointType::GEARBOX:
-  {
-    // Supported joint type
-    break;
-  }
-  case sdf::JointType::FIXED:
-  {
-    igndbg << "[JointTrajectoryController] Fixed joint [" << jointName << "(Entity=" << _entity
-           << ")] is skipped.\n";
-    return;
-  }
-  case sdf::JointType::REVOLUTE2:
-  case sdf::JointType::SCREW:
-  case sdf::JointType::BALL:
-  case sdf::JointType::UNIVERSAL:
-  {
-    ignwarn << "[JointTrajectoryController] Joint [" << jointName << "(Entity=" << _entity
-            << ")] is of unsupported type. "
-            << "Only joints with a single axis are supported.\n";
-    return;
-  }
-  default:
-  {
-    ignwarn << "[JointTrajectoryController] Joint [" << jointName << "(Entity=" << _entity
-            << ")] is of unknown type.\n";
-    return;
-  }
+    jointEntities = _ecm.ChildrenByComponents(_entity, components::Joint());
   }
 
-  // Skip if joint is not enabled
-  if (!_enabledJoints.empty())
+  // Iterate over all joints and verify whether they can be enabled or not
+  for (const auto &jointEntity : jointEntities)
   {
-    const auto it = std::find(_enabledJoints.begin(), _enabledJoints.end(), jointName);
-    if (it == _enabledJoints.end())
+    const auto jointName = _ecm.Component<components::Name>(jointEntity)->Data();
+
+    // Ignore duplicate joints
+    for (const auto &actuatedJoint : this->actuatedJoints)
     {
-      ignmsg << "[JointTrajectoryController] Ignoring disabled joint [" << jointName << "(Entity="
-             << _entity << ")]\".\n";
-      return;
+      if (actuatedJoint.second.entity == jointEntity)
+      {
+        ignwarn << "[JointTrajectoryController] Ignoring duplicate joint [" << jointName
+                << "(Entity=" << jointEntity << ")].\n";
+        continue;
+      }
     }
-    // If enabled, update joint index to match the order specified in SDF
-    jointIndex = std::distance(_enabledJoints.begin(), it);
+
+    // Make sure the joint type is supported, i.e. it has exactly one actuated axis
+    const auto *jointType = _ecm.Component<components::JointType>(jointEntity);
+    switch (jointType->Data())
+    {
+      case sdf::JointType::PRISMATIC:
+      case sdf::JointType::REVOLUTE:
+      case sdf::JointType::CONTINUOUS:
+      case sdf::JointType::GEARBOX:
+      {
+        // Supported joint type
+        break;
+      }
+      case sdf::JointType::FIXED:
+      {
+        igndbg << "[JointTrajectoryController] Fixed joint [" << jointName << "(Entity="
+               << jointEntity << ")] is skipped.\n";
+        continue;
+      }
+      case sdf::JointType::REVOLUTE2:
+      case sdf::JointType::SCREW:
+      case sdf::JointType::BALL:
+      case sdf::JointType::UNIVERSAL:
+      {
+        ignwarn << "[JointTrajectoryController] Joint [" << jointName << "(Entity=" << jointEntity
+                << ")] is of unsupported type. Only joints with a single axis are supported.\n";
+        continue;
+      }
+      default:
+      {
+        ignwarn << "[JointTrajectoryController] Joint [" << jointName << "(Entity=" << jointEntity
+                << ")] is of unknown type.\n";
+        continue;
+      }
+    }
+    output.push_back(jointEntity);
   }
 
-  // Create a new actuated joint
-  this->actuatedJoints[jointName] = ActuatedJoint(_entity, _sdf, jointIndex);
-  ignmsg << "[JointTrajectoryController] Configured joint [" << jointName << "(Entity=" << _entity
-         << ")].\n";
+  return output;
 }
 
+//////////////////////////////////////////////////
 void JointTrajectoryControllerPrivate::JointTrajectoryCallback(
     const ignition::msgs::JointTrajectory &_msg)
 {
@@ -505,14 +590,20 @@ void JointTrajectoryControllerPrivate::JointTrajectoryCallback(
     return;
   }
 
+  // Warn user that accelerations are currently ignored if the first point contains them
+  if (_msg.points(0).accelerations_size() > 0)
+  {
+    ignwarn << "[JointTrajectoryController] JointTrajectory message contains acceleration commands,"
+               " which are currently ignored.\n";
+  }
+
   // Lock mutex guarding the trajectory
   std::lock_guard<std::mutex> lock(this->trajectoryMutex);
 
   if (this->trajectory.status != Trajectory::Reached)
   {
     ignwarn << "[JointTrajectoryController] A new JointTrajectory message was received while"
-               " executing a previous trajectory.\n ";
-    // TODO: Handle this behaviour properly
+               " executing a previous trajectory.\n";
   }
 
   // Get start time of the trajectory from message header if desired
@@ -544,17 +635,14 @@ void JointTrajectoryControllerPrivate::JointTrajectoryCallback(
   }
 }
 
+//////////////////////////////////////////////////
 void JointTrajectoryControllerPrivate::Reset()
 {
   for (auto &actuatedJoint : this->actuatedJoints)
   {
     auto *joint = &actuatedJoint.second;
-    // Reset joint targets
-    joint->target.position = joint->initialPosition;
-    joint->target.velocity = 0.0;
-    joint->target.acceleration = 0.0;
-    joint->target.effort = 0.0;
-
+    // Reset joint target
+    joint->ResetTarget();
     // Reset PIDs
     joint->ResetPIDs();
   }
@@ -563,107 +651,198 @@ void JointTrajectoryControllerPrivate::Reset()
   this->trajectory.Reset();
 }
 
+///////////////////////
+/// JointParameters ///
+///////////////////////
+
+//////////////////////////////////////////////////
+std::map<std::string, JointParameters> JointParameters::ParseAll(
+    const std::shared_ptr<const sdf::Element> &_sdf,
+    ignition::gazebo::EntityComponentManager &_ecm,
+    std::vector<Entity> _enabledJoints)
+{
+  std::map<std::string, JointParameters> output;
+
+  const auto initialPositionAll   = JointParameters::Parse<double>(_sdf, "initial_position");
+
+  const auto positionPGainAll     = JointParameters::Parse<double>(_sdf, "position_p_gain");
+  const auto positionIGainAll     = JointParameters::Parse<double>(_sdf, "position_i_gain");
+  const auto positionDGainAll     = JointParameters::Parse<double>(_sdf, "position_d_gain");
+  const auto positionIMinAll      = JointParameters::Parse<double>(_sdf, "position_i_min");
+  const auto positionIMaxAll      = JointParameters::Parse<double>(_sdf, "position_i_max");
+  const auto positionCmdMinAll    = JointParameters::Parse<double>(_sdf, "position_cmd_min");
+  const auto positionCmdMaxAll    = JointParameters::Parse<double>(_sdf, "position_cmd_max");
+  const auto positionCmdOffsetAll = JointParameters::Parse<double>(_sdf, "position_cmd_offset");
+
+  const auto velocityPGainAll     = JointParameters::Parse<double>(_sdf, "velocity_p_gain");
+  const auto velocityIGainAll     = JointParameters::Parse<double>(_sdf, "velocity_i_gain");
+  const auto velocityDGainAll     = JointParameters::Parse<double>(_sdf, "velocity_d_gain");
+  const auto velocityIMinAll      = JointParameters::Parse<double>(_sdf, "velocity_i_min");
+  const auto velocityIMaxAll      = JointParameters::Parse<double>(_sdf, "velocity_i_max");
+  const auto velocityCmdMinAll    = JointParameters::Parse<double>(_sdf, "velocity_cmd_min");
+  const auto velocityCmdMaxAll    = JointParameters::Parse<double>(_sdf, "velocity_cmd_max");
+  const auto velocityCmdOffsetAll = JointParameters::Parse<double>(_sdf, "velocity_cmd_offset");
+
+  for (std::size_t i = 0; i < _enabledJoints.size(); ++i)
+  {
+    JointParameters params;
+    params.initialPosition        = params.NthElementOr(initialPositionAll, i,
+                                                        params.initialPositionDefault);
+
+    params.positionPID.pGain      = params.NthElementOr(positionPGainAll, i,
+                                                        params.positionPID.pGainDefault);
+    params.positionPID.iGain      = params.NthElementOr(positionIGainAll, i,
+                                                        params.positionPID.iGainDefault);
+    params.positionPID.dGain      = params.NthElementOr(positionDGainAll, i,
+                                                        params.positionPID.dGainDefault);
+    params.positionPID.iMin       = params.NthElementOr(positionIMinAll, i,
+                                                        params.positionPID.iMinDefault);
+    params.positionPID.iMax       = params.NthElementOr(positionIMaxAll, i,
+                                                        params.positionPID.iMaxDefault);
+    params.positionPID.cmdMin     = params.NthElementOr(positionCmdMinAll, i,
+                                                        params.positionPID.cmdMinDefault);
+    params.positionPID.cmdMax     = params.NthElementOr(positionCmdMaxAll, i,
+                                                        params.positionPID.cmdMaxDefault);
+    params.positionPID.cmdOffset  = params.NthElementOr(positionCmdOffsetAll, i,
+                                                        params.positionPID.cmdOffsetDefault);
+
+    params.velocityPID.pGain      = params.NthElementOr(velocityPGainAll, i,
+                                                        params.velocityPID.pGainDefault);
+    params.velocityPID.iGain      = params.NthElementOr(velocityIGainAll, i,
+                                                        params.velocityPID.iGainDefault);
+    params.velocityPID.dGain      = params.NthElementOr(velocityDGainAll, i,
+                                                        params.velocityPID.dGainDefault);
+    params.velocityPID.iMin       = params.NthElementOr(velocityIMinAll, i,
+                                                        params.velocityPID.iMinDefault);
+    params.velocityPID.iMax       = params.NthElementOr(velocityIMaxAll, i,
+                                                        params.velocityPID.iMaxDefault);
+    params.velocityPID.cmdMin     = params.NthElementOr(velocityCmdMinAll, i,
+                                                        params.velocityPID.cmdMinDefault);
+    params.velocityPID.cmdMax     = params.NthElementOr(velocityCmdMaxAll, i,
+                                                        params.velocityPID.cmdMaxDefault);
+    params.velocityPID.cmdOffset  = params.NthElementOr(velocityCmdOffsetAll, i,
+                                                        params.velocityPID.cmdOffsetDefault);
+
+    const auto jointName = _ecm.Component<components::Name>(_enabledJoints[i])->Data();
+    output[jointName] = params;
+  }
+
+  return output;
+}
+
+//////////////////////////////////////////////////
+template <typename T>
+std::vector<T> JointParameters::Parse(const std::shared_ptr<const sdf::Element> &_sdf,
+                                      const std::string &_parameterName)
+{
+  std::vector<T> output;
+
+  if (_sdf->HasElement(_parameterName))
+  {
+    sdf::ElementPtr param = const_cast<sdf::Element *>(_sdf.get())->GetElement(_parameterName);
+    while (param)
+    {
+      output.push_back(param->Get<T>());
+      param = param->GetNextElement(_parameterName);
+    }
+  }
+
+  return output;
+}
+
+////////////////////////////////////////////////
+template <typename T>
+T JointParameters::NthElementOr(const std::vector<T> &_vec,
+                                const size_t &_index,
+                                const T &_alternative_value)
+{
+  if (_index < _vec.size())
+  {
+    return _vec[_index];
+  }
+  else
+  {
+    return _alternative_value;
+  }
+}
+
 /////////////////////
 /// ActuatedJoint ///
 /////////////////////
 
+//////////////////////////////////////////////////
 ActuatedJoint::ActuatedJoint(const Entity &_entity,
-                             const std::shared_ptr<const sdf::Element> &_sdf,
-                             const size_t &_jointIndex)
+                             const JointParameters &_params)
 {
   this->entity = _entity;
 
-  this->initialPosition = GetNthOrDefault(ParseVectorParam<double>(
-                                              _sdf->Get<std::string>("initial_positions")),
-                                          _jointIndex, 0.0);
-  this->target.position = this->initialPosition;
+  this->initialPosition = _params.initialPosition;
+  this->target.position = _params.initialPosition;
   this->target.velocity = 0.0;
   this->target.acceleration = 0.0;
   this->target.effort = 0.0;
 
-  this->pids.position = ignition::math::PID(
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_p_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_i_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_d_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_i_max")),
-                      _jointIndex, -1.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_i_min")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_cmd_min")),
-                      _jointIndex, -1.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_cmd_max")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("position_cmd_offset")),
-                      _jointIndex, 0.0));
+  this->pids.position = ignition::math::PID(_params.positionPID.pGain,
+                                            _params.positionPID.iGain,
+                                            _params.positionPID.dGain,
+                                            _params.positionPID.iMax,
+                                            _params.positionPID.iMin,
+                                            _params.positionPID.cmdMax,
+                                            _params.positionPID.cmdMin,
+                                            _params.positionPID.cmdOffset);
 
-  this->pids.velocity = ignition::math::PID(
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_p_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_i_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_d_gain")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_i_max")),
-                      _jointIndex, -1.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_i_min")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_cmd_min")),
-                      _jointIndex, -1.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_cmd_max")),
-                      _jointIndex, 0.0),
-      GetNthOrDefault(ParseVectorParam<double>(_sdf->Get<std::string>("velocity_cmd_offset")),
-                      _jointIndex, 0.0));
+  this->pids.velocity = ignition::math::PID(_params.velocityPID.pGain,
+                                            _params.velocityPID.iGain,
+                                            _params.velocityPID.dGain,
+                                            _params.velocityPID.iMax,
+                                            _params.velocityPID.iMin,
+                                            _params.velocityPID.cmdMax,
+                                            _params.velocityPID.cmdMin,
+                                            _params.velocityPID.cmdOffset);
+
+  igndbg << "[JointTrajectoryController] Parameters for joint (Entity=" << _entity << "):\n"
+         << "initial_position: ["    << _params.initialPosition       << "]\n"
+         << "position_p_gain: ["     << _params.positionPID.pGain     << "]\n"
+         << "position_i_gain: ["     << _params.positionPID.iGain     << "]\n"
+         << "position_d_gain: ["     << _params.positionPID.dGain     << "]\n"
+         << "position_i_min: ["      << _params.positionPID.iMax      << "]\n"
+         << "position_i_max: ["      << _params.positionPID.iMax      << "]\n"
+         << "position_cmd_min: ["    << _params.positionPID.cmdMin    << "]\n"
+         << "position_cmd_max: ["    << _params.positionPID.cmdMax    << "]\n"
+         << "position_cmd_offset: [" << _params.positionPID.cmdOffset << "]\n"
+         << "velocity_p_gain: ["     << _params.velocityPID.pGain     << "]\n"
+         << "velocity_i_gain: ["     << _params.velocityPID.iGain     << "]\n"
+         << "velocity_d_gain: ["     << _params.velocityPID.dGain     << "]\n"
+         << "velocity_i_min: ["      << _params.velocityPID.iMax      << "]\n"
+         << "velocity_i_max: ["      << _params.velocityPID.iMax      << "]\n"
+         << "velocity_cmd_min: ["    << _params.velocityPID.cmdMin    << "]\n"
+         << "velocity_cmd_max: ["    << _params.velocityPID.cmdMax    << "]\n"
+         << "velocity_cmd_offset: [" << _params.velocityPID.cmdOffset << "]\n";
 }
 
-bool ActuatedJoint::SetupComponents(ignition::gazebo::EntityComponentManager &_ecm) const
+//////////////////////////////////////////////////
+void ActuatedJoint::SetupComponents(ignition::gazebo::EntityComponentManager &_ecm) const
 {
-  const auto jointName = _ecm.Component<components::Name>(this->entity)->Data();
-
   // Create JointPosition component if one does not exist
-  auto jointPositionComponent = _ecm.Component<components::JointPosition>(this->entity);
-  if (jointPositionComponent == nullptr)
+  if (nullptr == _ecm.Component<components::JointPosition>(this->entity))
   {
     _ecm.CreateComponent(this->entity, components::JointPosition());
   }
-  if (jointPositionComponent == nullptr)
-  {
-    ignwarn << "[JointTrajectoryController] Cannot create JointPosition component for a joint ["
-            << jointName << "(Entity=" << this->entity << ")].\n";
-    return false;
-  }
 
   // Create JointVelocity component if one does not exist
-  auto jointVelocityComponent = _ecm.Component<components::JointVelocity>(this->entity);
-  if (jointVelocityComponent == nullptr)
+  if (nullptr == _ecm.Component<components::JointVelocity>(this->entity))
   {
     _ecm.CreateComponent(this->entity, components::JointVelocity());
   }
-  if (jointVelocityComponent == nullptr)
-  {
-    ignwarn << "[JointTrajectoryController] Cannot create JointVelocity component for a joint ["
-            << jointName << "(Entity=" << this->entity << ")].\n";
-    return false;
-  }
 
   // Create JointForceCmd component if one does not exist
-  auto jointForceCmdComponent = _ecm.Component<components::JointForceCmd>(this->entity);
-  if (jointForceCmdComponent == nullptr)
+  if (nullptr == _ecm.Component<components::JointForceCmd>(this->entity))
   {
     _ecm.CreateComponent(this->entity, components::JointForceCmd({0.0}));
   }
-  if (jointForceCmdComponent == nullptr)
-  {
-    ignwarn << "[JointTrajectoryController] Cannot create JointForceCmd component for a joint ["
-            << jointName << "(Entity=" << this->entity << ")].\n";
-    return false;
-  }
-
-  return true;
 }
 
+//////////////////////////////////////////////////
 void ActuatedJoint::SetTarget(const ignition::msgs::JointTrajectoryPoint &_targetPoint,
                               const size_t &_jointIndex)
 {
@@ -685,6 +864,7 @@ void ActuatedJoint::SetTarget(const ignition::msgs::JointTrajectoryPoint &_targe
   }
 }
 
+//////////////////////////////////////////////////
 void ActuatedJoint::Update(ignition::gazebo::EntityComponentManager &_ecm,
                            const std::chrono::steady_clock::duration &_dt)
 {
@@ -713,6 +893,16 @@ void ActuatedJoint::Update(ignition::gazebo::EntityComponentManager &_ecm,
   jointForceCmdComponent->Data()[0] = force;
 }
 
+//////////////////////////////////////////////////
+void ActuatedJoint::ResetTarget()
+{
+  this->target.position = this->initialPosition;
+  this->target.velocity = 0.0;
+  this->target.acceleration = 0.0;
+  this->target.effort = 0.0;
+}
+
+//////////////////////////////////////////////////
 void ActuatedJoint::ResetPIDs()
 {
   this->pids.position.Reset();
@@ -723,6 +913,7 @@ void ActuatedJoint::ResetPIDs()
 /// Trajectory ///
 //////////////////
 
+//////////////////////////////////////////////////
 bool Trajectory::UpdateCurrentPoint(const std::chrono::steady_clock::duration &_simTime)
 {
   bool isUpdated = false;
@@ -754,18 +945,13 @@ bool Trajectory::UpdateCurrentPoint(const std::chrono::steady_clock::duration &_
   return isUpdated;
 }
 
+//////////////////////////////////////////////////
 bool Trajectory::IsGoalReached() const
 {
-  if (this->pointIndex + 1 >= this->points.size())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return this->pointIndex + 1 >= this->points.size();
 }
 
+//////////////////////////////////////////////////
 float Trajectory::ComputeProgress() const
 {
   if (this->points.size() == 0)
@@ -778,6 +964,7 @@ float Trajectory::ComputeProgress() const
   }
 }
 
+//////////////////////////////////////////////////
 void Trajectory::Reset()
 {
   this->status = Trajectory::New;
