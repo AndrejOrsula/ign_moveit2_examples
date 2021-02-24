@@ -458,7 +458,7 @@
          x="149.57036"
          y="46.889248"
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
-         id="tspan1750">(Ignition =&gt; ROS 2)</tspan></text>
+         id="tspan1750">Ignition =&gt; ROS 2</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
        d="m 165.16042,49.094797 c -18.06586,0 -36.1317,0 -45.16504,-5.206015 C 110.96204,38.682768 110.96204,28.271335 110.96204,17.86"
@@ -499,7 +499,7 @@
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
          y="60.73119"
          x="114.20915"
-         sodipodi:role="line">(Ignition =&gt; ROS 2)</tspan></text>
+         sodipodi:role="line">Ignition =&gt; ROS 2</tspan></text>
     <text
        id="text3477"
        y="22.406725"
@@ -515,7 +515,7 @@
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
          y="26.032928"
          x="149.70056"
-         sodipodi:role="line">(ROS 2 =&gt; Ignition)</tspan></text>
+         sodipodi:role="line">ROS 2 =&gt; Ignition</tspan></text>
     <path
        transform="translate(-73.610863,-16.630952)"
        style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4466)"
@@ -549,12 +549,12 @@
          x="71.010941"
          y="29.551321"
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
-         id="tspan8900">(C++ :  move_group)</tspan><tspan
+         id="tspan8900">C++ :  move_group</tspan><tspan
          sodipodi:role="line"
          x="71.010941"
          y="33.226738"
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
-         id="tspan8908">(Python : action request)</tspan></text>
+         id="tspan8908">Python : service request</tspan></text>
     <text
        id="text8916"
        y="15.619029"
@@ -570,12 +570,12 @@
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
          y="19.245232"
          x="30.900843"
-         sodipodi:role="line">(C++ :  move_group)</tspan><tspan
+         sodipodi:role="line">C++ :  move_group</tspan><tspan
          id="tspan8914"
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
          y="22.920649"
          x="30.900843"
-         sodipodi:role="line">(Python : action result)</tspan></text>
+         sodipodi:role="line">Python : service result</tspan></text>
     <path
        transform="matrix(-1,0,0,1,295.54095,-16.636777)"
        style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4466-5)"
@@ -609,6 +609,6 @@
          style="font-size:2.82222223px;line-height:0.5;stroke-width:0.26458332"
          y="16.806246"
          x="194.79257"
-         sodipodi:role="line">(Ignition =&gt; ROS 2)</tspan></text>
+         sodipodi:role="line">Ignition =&gt; ROS 2</tspan></text>
   </g>
 </svg>
