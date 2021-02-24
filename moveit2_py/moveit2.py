@@ -11,6 +11,7 @@ import threading
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
+from rclpy.parameter import Parameter
 
 from std_msgs.msg import Float32
 from builtin_interfaces.msg import Duration
@@ -23,13 +24,19 @@ from moveit_msgs.msg import PositionIKRequest, RobotTrajectory
 from moveit_msgs.srv import GetPositionIK, GetPositionFK, GetMotionPlan, GetCartesianPath
 from moveit_msgs.action import MoveGroup
 from action_msgs.msg import GoalStatus
+import math
 
 
 class MoveIt2Interface(Node):
 
-    def __init__(self):
-        super().__init__("ign_moveit2_py")
-        self.init_robot()
+    def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = False, node_name: str = 'ign_moveit2_py'):
+        super().__init__(node_name)
+        self.set_parameters([Parameter('use_sim_time',
+                                       type_=Parameter.Type.BOOL,
+                                       value=use_sim_time)])
+
+        self.init_robot(
+            separate_gripper_controller=separate_gripper_controller)
         self.init_compute_fk()
         self.init_compute_ik()
         self.init_plan_kinematic_path()
@@ -37,7 +44,7 @@ class MoveIt2Interface(Node):
         self.init_gripper()
         self.get_logger().info("ign_moveit2_py initialised successfuly")
 
-    def init_robot(self):
+    def init_robot(self, separate_gripper_controller=False):
         """
         Initialise robot groups, links and joints. This would normally get loaded from URDF via
         `moveit_commander`.
@@ -75,6 +82,11 @@ class MoveIt2Interface(Node):
         # Publisher of trajectories
         self.joint_trajectory_pub = self.create_publisher(JointTrajectory,
                                                           "joint_trajectory", 1)
+
+        self.use_separate_gripper_controller = separate_gripper_controller
+        if separate_gripper_controller:
+            self.gripper_trajectory_pub = self.create_publisher(JointTrajectory,
+                                                                "gripper_trajectory", 1)
 
         # Subscriber of current joint states
         self.joint_state = JointState()
@@ -123,19 +135,26 @@ class MoveIt2Interface(Node):
             while not self.joint_progress == 1.0:
                 self.joint_progress_cond.wait(timeout=0.5)
 
-    def pub_trajectory(self, trajectory):
+    def pub_trajectory(self, trajectory, is_gripper=False):
         """
         Publish trajectory such that it can be executed, e.g. by `JointTrajectoryController`
         Ignition plugin.
         """
         if isinstance(trajectory, JointTrajectory):
-            self.joint_trajectory_pub.publish(trajectory)
+            if is_gripper and self.use_separate_gripper_controller:
+                self.gripper_trajectory_pub.publish(trajectory)
+            else:
+                self.joint_trajectory_pub.publish(trajectory)
         elif isinstance(trajectory, RobotTrajectory):
-            self.joint_trajectory_pub.publish(trajectory.joint_trajectory)
+            if is_gripper and self.use_separate_gripper_controller:
+                self.gripper_trajectory_pub.publish(
+                    trajectory.joint_trajectory)
+            else:
+                self.joint_trajectory_pub.publish(trajectory.joint_trajectory)
         else:
             raise Exception("Invalid type passed into pub_trajectory()")
 
-    def execute(self, joint_trajectory=None) -> bool:
+    def execute(self, joint_trajectory=None, is_gripper=False) -> bool:
         """
         Execute last planned motion plan, or the `joint_trajectory` specified as argument.
         """
@@ -147,14 +166,15 @@ class MoveIt2Interface(Node):
 
         # Make sure there is a plan to follow
         if not plan.points:
-            self.get_logger().warn(
-                "Cannot execute motion plan because it does not contain any trajectory points")
+            # TODO: re-enable warning, but add an optional debug level to configuration
+            # self.get_logger().warn(
+            #     "Cannot execute motion plan because it does not contain any trajectory points")
             return False
 
         # Reset joint progress
         self.joint_progress = 0.0
 
-        self.pub_trajectory(plan)
+        self.pub_trajectory(plan, is_gripper=is_gripper)
         return True
 
     def move_to_joint_state(self, joint_state,
@@ -178,6 +198,20 @@ class MoveIt2Interface(Node):
             point.effort = joint_state.effort
         joint_trajectory.points.append(point)
 
+        self.pub_trajectory(joint_trajectory)
+
+    def move_to_joint_positions(self, joint_positions):
+        """
+        Set joint position target on all joints. This function does NOT plan a
+        smooth trajectory and only publishes joint_state as the next goal that should be reached
+        immediately.
+        """
+
+        joint_trajectory = JointTrajectory()
+        joint_trajectory.joint_names = self.arm_joints
+        point = JointTrajectoryPoint()
+        point.positions = joint_positions
+        joint_trajectory.points.append(point)
         self.pub_trajectory(joint_trajectory)
 
     # compute_fk
@@ -214,8 +248,7 @@ class MoveIt2Interface(Node):
         else:
             self.fk_request.robot_state.joint_state = joint_state
 
-        self.fk_request.header.stamp = self._clock.now().to_msg()
-
+        self.fk_request.header.stamp = self.fk_request.robot_state.joint_state.header.stamp
         self.compute_fk_client.wait_for_service()
         return self.compute_fk_client.call(self.fk_request)
 
@@ -410,9 +443,12 @@ class MoveIt2Interface(Node):
         position_constraint.header.frame_id = frame
         position_constraint.link_name = self.arm_end_effector
         position_constraint.constraint_region.primitive_poses.append(Pose())
-        position_constraint.constraint_region.primitive_poses[0].position.x = position[0]
-        position_constraint.constraint_region.primitive_poses[0].position.y = position[1]
-        position_constraint.constraint_region.primitive_poses[0].position.z = position[2]
+        position_constraint.constraint_region.primitive_poses[0].position.x = float(
+            position[0])
+        position_constraint.constraint_region.primitive_poses[0].position.y = float(
+            position[1])
+        position_constraint.constraint_region.primitive_poses[0].position.z = float(
+            position[2])
 
         # Goal is defined as a sphere with radius equal to tolerance
         position_constraint.constraint_region.primitives.append(
@@ -435,10 +471,10 @@ class MoveIt2Interface(Node):
         orientation_constraint = OrientationConstraint()
         orientation_constraint.header.frame_id = self.arm_base_link
         orientation_constraint.link_name = frame
-        orientation_constraint.orientation.x = quaternion[0]
-        orientation_constraint.orientation.y = quaternion[1]
-        orientation_constraint.orientation.z = quaternion[2]
-        orientation_constraint.orientation.w = quaternion[3]
+        orientation_constraint.orientation.x = float(quaternion[0])
+        orientation_constraint.orientation.y = float(quaternion[1])
+        orientation_constraint.orientation.z = float(quaternion[2])
+        orientation_constraint.orientation.w = float(quaternion[3])
         orientation_constraint.absolute_x_axis_tolerance = tolerance
         orientation_constraint.absolute_y_axis_tolerance = tolerance
         orientation_constraint.absolute_z_axis_tolerance = tolerance
@@ -534,9 +570,9 @@ class MoveIt2Interface(Node):
         Plan kinematic path for gripper.
         """
         self.gripper_path_request.motion_plan_request.max_velocity_scaling_factor = \
-            speed/self.gripper_max_speed
+            float(speed/self.gripper_max_speed)
         (self.gripper_path_request.motion_plan_request.goal_constraints[0].
-         joint_constraints[0].position) = width/2
+         joint_constraints[0].position) = float(width/2)
 
         self.plan_gripper_path_client.wait_for_service()
         response = self.plan_gripper_path_client.call(
@@ -562,39 +598,69 @@ class MoveIt2Interface(Node):
 
         return joint_trajectory
 
-    def gripper_close(self, width=0.0, speed=0.2, force=20.0, force_start=0.75) -> bool:
+    def gripper_close(self, width=0.0, speed=0.2, force=20.0, force_start=0.75, manual_plan: bool = False) -> bool:
         """
         Close gripper. Argument `force_start` (0.0,1.0] can be used to indicate point of the
         trajectory at which force will start being applied.
         """
-        joint_trajectory = self.gripper_plan_path(width, speed)
 
-        if not joint_trajectory.points:
-            return False
+        if not manual_plan:
+            joint_trajectory = self.gripper_plan_path(width, speed)
+            if not joint_trajectory.points:
+                # If planning failed, use manually planned trajectory
+                joint_trajectory = self.__gripper_trajectory_manual(
+                    width)
+        else:
+            joint_trajectory = self.__gripper_trajectory_manual(width)
 
         # Start slowly applying force in the last (1-force_start)% of the trajectory
         force_index_end = len(joint_trajectory.points)
-        force_index_start = round(force_start*force_index_end)
-        force_range = force_index_end - force_index_start
+        force_index_start = math.floor(force_start*force_index_end)
+        force_range = max(1, force_index_end - force_index_start)
         for i in range(force_index_start, force_index_end):
             # Scale the applied force linearly with the index
             scaling_factor = ((i+1)-force_index_start) / force_range
             applied_force = scaling_factor * force
             # Closing direction is in negative directions
-            joint_trajectory.points[i].effort = [-applied_force, -applied_force]
+            joint_trajectory.points[i].effort = [-applied_force] * 2
 
-        return self.execute(joint_trajectory)
+        return self.execute(joint_trajectory, is_gripper=True)
 
-    def gripper_open(self, width=0.08, speed=0.2) -> bool:
+    def gripper_open(self, width=0.08, speed=0.2, manual_plan: bool = False) -> bool:
         """
         Open gripper.
         """
-        joint_trajectory = self.gripper_plan_path(width, speed)
 
-        if not joint_trajectory.points:
-            return False
+        if not manual_plan:
+            joint_trajectory = self.gripper_plan_path(width, speed)
+            if not joint_trajectory.points:
+                # If planning failed, use manually planned trajectory
+                joint_trajectory = self.__gripper_trajectory_manual(
+                    width)
+        else:
+            joint_trajectory = self.__gripper_trajectory_manual(width)
 
         # Make sure no force is applied anymore
-        joint_trajectory.points[0].effort = [0.0, 0.0]
+        joint_trajectory.points[0].effort = [0.0] * 2
 
-        return self.execute(joint_trajectory)
+        return self.execute(joint_trajectory, is_gripper=True)
+
+    def __gripper_trajectory_manual(self, width: float) -> JointTrajectory:
+        """
+        Generate unnatural, instant trajectory. Use only if MoveIt planning fails for some reason
+        """
+
+        joint_trajectory = JointTrajectory()
+
+        for gripper_joint in self.gripper_joints:
+            joint_trajectory.joint_names.append(gripper_joint)
+
+        joint_trajectory.header.stamp = self._clock.now().to_msg()
+        joint_trajectory.header.frame_id = self.arm_base_link
+
+        for i in range(2):
+            joint_trajectory.points.append(JointTrajectoryPoint())
+            joint_trajectory.points[i].positions = [width/2] * 2
+            joint_trajectory.points[i].time_from_start.nanosec = int(2e8)
+
+        return joint_trajectory

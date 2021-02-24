@@ -26,7 +26,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'config_rviz2',
             default_value=config_rviz2,
-            description="Path to config for RViz2"),
+            description="Path to config for RViz2. If empty, RViz2 will be disabled"),
         DeclareLaunchArgument(
             'log_level',
             default_value=log_level,
@@ -73,7 +73,7 @@ def generate_launch_description():
         # JointTrajectoryProgress bridge (IGN -> ROS2)
         Node(package='ros_ign_bridge',
              executable='parameter_bridge',
-             name='parameter_bridge_joint_trajectory_progreess',
+             name='parameter_bridge_joint_trajectory_progress',
              output='screen',
              arguments=['/joint_trajectory_progress@std_msgs/msg/Float32[ignition.msgs.Float',
                         '--ros-args', '--log-level', log_level],
