@@ -66,7 +66,5 @@ install(PROGRAMS
 # Install directories
 install(DIRECTORY launch worlds DESTINATION share/${PROJECT_NAME})
 
-add_subdirectory(joint_trajectory_controller)
-
 # Setup the project
 ament_package()
