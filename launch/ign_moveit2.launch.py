@@ -32,9 +32,9 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 [os.path.join(get_package_share_directory("panda_moveit2_config"),
                               "launch", "move_group_action_server.launch.py")]),
-            launch_arguments=[('use_sim_time', use_sim_time),
-                              ('config_rviz2', config_rviz2)]
-        ),
+            # Simulation time does not function properly (as of Nov 2020), see https://github.com/AndrejOrsula/ign_moveit2/issues/4
+            launch_arguments=[('use_sim_time', "False"),
+                              ('config_rviz2', config_rviz2)]),
 
         # Clock bridge (IGN -> ROS2)
         Node(package="ros_ign_bridge",
@@ -64,13 +64,12 @@ def generate_launch_description():
                  "/joint_trajectory@trajectory_msgs/msg/JointTrajectory]ignition.msgs.JointTrajectory"],
              parameters=[{'use_sim_time': use_sim_time}]),
 
-        # Static TF
-        Node(package='tf2_ros',
-             executable='static_transform_publisher',
-             name='static_transform_publisher',
-             output='log',
-             arguments=['0.0', '0.0', '0.0',
-                        '0.0', '0.0', '0.0',
-                        'world', 'panda_link0'],
+        # JointTrajectoryProgress bridge (IGN -> ROS2)
+        Node(package="ros_ign_bridge",
+             executable="parameter_bridge",
+             name="parameter_bridge_joint_trajectory_progreess",
+             output="screen",
+             arguments=[
+                 "/joint_trajectory_progress@std_msgs/msg/Float32[ignition.msgs.Float"],
              parameters=[{'use_sim_time': use_sim_time}])
     ])
