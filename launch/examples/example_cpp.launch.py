@@ -36,33 +36,33 @@ def load_yaml(package_name, file_path):
 def generate_launch_description():
     # Launch Arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
-    config_rviz2 = LaunchConfiguration('config_rviz2', default=os.path.join(get_package_share_directory("ign_moveit2"),
-                                                                            "launch", "rviz.rviz"))
+    config_rviz2 = LaunchConfiguration('config_rviz2', default=os.path.join(get_package_share_directory('ign_moveit2'),
+                                                                            'launch', 'rviz.rviz'))
 
     # URDF
-    robot_urdf_config = load_file("panda_ign",
-                                  "urdf/panda.urdf")
-    robot_description = {"robot_description": robot_urdf_config}
+    robot_urdf_config = load_file('panda_ign',
+                                  'urdf/panda.urdf')
+    robot_description = {'robot_description': robot_urdf_config}
 
     # SRDF
-    robot_srdf = load_file("panda_moveit2_config",
-                           "srdf/panda.srdf")
-    robot_description_semantic = {"robot_description_semantic": robot_srdf}
+    robot_srdf = load_file('panda_moveit2_config',
+                           'srdf/panda.srdf')
+    robot_description_semantic = {'robot_description_semantic': robot_srdf}
 
     # Kinematics
-    kinematics = load_yaml("panda_moveit2_config",
-                           "config/kinematics.yaml")
+    kinematics = load_yaml('panda_moveit2_config',
+                           'config/kinematics.yaml')
 
     return LaunchDescription([
         # Launch Arguments
         DeclareLaunchArgument(
             'use_sim_time',
             default_value=use_sim_time,
-            description='If true, use simulated clock'),
+            description="If true, use simulated clock"),
         DeclareLaunchArgument(
             'config_rviz2',
             default_value=config_rviz2,
-            description='Path to config for RViz2'),
+            description="Path to config for RViz2"),
 
         # C++ example executable
         Node(package='ign_moveit2',

@@ -11,8 +11,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    world = os.path.join(get_package_share_directory("ign_moveit2"),
-                         "worlds", "panda_follow.sdf")
+    world = os.path.join(get_package_share_directory('ign_moveit2'),
+                         'worlds', 'panda_follow.sdf')
 
     # Launch Arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
@@ -22,21 +22,21 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'use_sim_time',
             default_value=use_sim_time,
-            description='If true, use simulated clock'),
+            description="If true, use simulated clock"),
 
         # Launch gazebo environment
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                [os.path.join(get_package_share_directory("ros_ign_gazebo"),
-                              "launch", "ign_gazebo.launch.py")]),
+                [os.path.join(get_package_share_directory('ros_ign_gazebo'),
+                              'launch', 'ign_gazebo.launch.py')]),
             launch_arguments=[('ign_args', [world, ' -r'])]),
 
         # Box pose (IGN -> ROS2)
-        Node(package="ros_ign_bridge",
-             executable="parameter_bridge",
-             name="parameter_bridge_box_pose",
-             output="screen",
+        Node(package='ros_ign_bridge',
+             executable='parameter_bridge',
+             name='parameter_bridge_box_pose',
+             output='screen',
              arguments=[
-                 "/model/box/pose@geometry_msgs/msg/Pose[ignition.msgs.Pose"],
+                 '/model/box/pose@geometry_msgs/msg/Pose[ignition.msgs.Pose'],
              parameters=[{'use_sim_time': use_sim_time}]),
     ])
