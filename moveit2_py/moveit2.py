@@ -2,11 +2,12 @@
 A simple python interface with MoveIt2 services (and actions). This is an alternative to
 moveit_commander, which is not yet ported to ROS 2 (as of Oct 2020).
 
-Note: This module is currently configured for Franka Emika Panda robot.
+Note: This module is currently configured for Franka Emika Panda robot and testing support for UR5 with RG2.
 Note: There is no Ignition-specific code in this module (this repo is just a convinient place).
 """
 
 import threading
+from typing import Optional
 
 import rclpy
 from rclpy.node import Node
@@ -29,14 +30,17 @@ import math
 
 class MoveIt2Interface(Node):
 
-    def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = False, node_name: str = 'ign_moveit2_py'):
+    def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = True, node_name: str = 'ign_moveit2_py', robot_model: str = 'panda'):
+        """
+        robot_model - 'panda' and 'ur5_rg2' are supported
+        """
         super().__init__(node_name)
         self.set_parameters([Parameter('use_sim_time',
                                        type_=Parameter.Type.BOOL,
                                        value=use_sim_time)])
 
-        self.init_robot(
-            separate_gripper_controller=separate_gripper_controller)
+        self.init_robot(robot_model=robot_model,
+                        separate_gripper_controller=separate_gripper_controller)
         self.init_compute_fk()
         self.init_compute_ik()
         self.init_plan_kinematic_path()
@@ -44,40 +48,67 @@ class MoveIt2Interface(Node):
         self.init_gripper()
         self.get_logger().info("ign_moveit2_py initialised successfuly")
 
-    def init_robot(self, separate_gripper_controller=False):
+    def init_robot(self, robot_model, separate_gripper_controller):
         """
         Initialise robot groups, links and joints. This would normally get loaded from URDF via
         `moveit_commander`.
         This also initialises subscriber to joint states and publisher to joint trajectories.
         """
-        self.robot_group_name = "panda_arm_hand"
-        # Arm
-        self.arm_group_name = "panda_arm"
-        self.arm_joints = ["panda_joint1",
-                           "panda_joint2",
-                           "panda_joint3",
-                           "panda_joint4",
-                           "panda_joint5",
-                           "panda_joint6",
-                           "panda_joint7"]
-        self.arm_links = ["panda_link0",
-                          "panda_link1",
-                          "panda_link2",
-                          "panda_link3",
-                          "panda_link4",
-                          "panda_link5",
-                          "panda_link6",
-                          "panda_link7",
-                          "panda_link8"]
-        self.arm_base_link = self.arm_links[0]
-        self.arm_end_effector = self.arm_links[-1]
-        # Gripper
-        self.gripper_group_name = "hand"
-        self.gripper_joints = ["panda_finger_joint1",
-                               "panda_finger_joint2"]
-        self.gripper_links = ["panda_leftfinger",
-                              "panda_rightfinger"]
-        self.gripper_max_speed = 0.2
+        if 'panda' == robot_model:
+            self.robot_group_name = "panda_arm_hand"
+            # Arm
+            self.arm_group_name = "panda_arm"
+            self.arm_joints = ["panda_joint1",
+                               "panda_joint2",
+                               "panda_joint3",
+                               "panda_joint4",
+                               "panda_joint5",
+                               "panda_joint6",
+                               "panda_joint7"]
+            self.arm_links = ["panda_link0",
+                              "panda_link1",
+                              "panda_link2",
+                              "panda_link3",
+                              "panda_link4",
+                              "panda_link5",
+                              "panda_link6",
+                              "panda_link7",
+                              "panda_link8"]
+            self.arm_base_link = self.arm_links[0]
+            self.arm_end_effector = self.arm_links[-1]
+            # Gripper
+            self.gripper_group_name = "hand"
+            self.gripper_joints = ["panda_finger_joint1",
+                                   "panda_finger_joint2"]
+            self.gripper_max_width = 0.08
+            self.gripper_max_speed = 0.2
+
+        elif 'ur5_rg2' == robot_model:
+            self.robot_group_name = "ur5_rg2"
+            # Arm
+            self.arm_group_name = "ur5"
+            self.arm_joints = ["elbow_joint",
+                               "shoulder_lift_joint",
+                               "shoulder_pan_joint",
+                               "wrist_1_joint",
+                               "wrist_2_joint",
+                               "wrist_3_joint"]
+            self.arm_links = ["base_link",
+                              "shoulder_link",
+                              "upper_arm_link",
+                              "forearm_link",
+                              "wrist_1_link",
+                              "wrist_2_link",
+                              "wrist_3_link",
+                              "tool0"]
+            self.arm_base_link = self.arm_links[0]
+            self.arm_end_effector = self.arm_links[-1]
+            # Gripper
+            self.gripper_group_name = "rg2"
+            self.gripper_joints = ["rg2_finger_joint1",
+                                   "rg2_finger_joint2"]
+            self.gripper_max_width = 2.3
+            self.gripper_max_speed = 1.57
 
         # Publisher of trajectories
         self.joint_trajectory_pub = self.create_publisher(JointTrajectory,
@@ -626,10 +657,13 @@ class MoveIt2Interface(Node):
 
         return self.execute(joint_trajectory, is_gripper=True)
 
-    def gripper_open(self, width=0.08, speed=0.2, manual_plan: bool = False) -> bool:
+    def gripper_open(self, width: Optional[float] = None, speed=0.2, manual_plan: bool = False) -> bool:
         """
         Open gripper.
         """
+
+        if width is None:
+            width = self.gripper_max_width
 
         if not manual_plan:
             joint_trajectory = self.gripper_plan_path(width, speed)
