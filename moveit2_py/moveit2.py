@@ -82,6 +82,7 @@ class MoveIt2Interface(Node):
                                    "panda_finger_joint2"]
             self.gripper_max_width = 0.08
             self.gripper_max_speed = 0.2
+            self.gripper_max_force = 20.0
 
         elif 'ur5_rg2' == robot_model:
             self.robot_group_name = "ur5_rg2"
@@ -107,8 +108,9 @@ class MoveIt2Interface(Node):
             self.gripper_group_name = "rg2"
             self.gripper_joints = ["rg2_finger_joint1",
                                    "rg2_finger_joint2"]
-            self.gripper_max_width = 2.3
+            self.gripper_max_width = 1.0471976
             self.gripper_max_speed = 1.57
+            self.gripper_max_force = 10.6
 
         # Publisher of trajectories
         self.joint_trajectory_pub = self.create_publisher(JointTrajectory,
@@ -239,6 +241,7 @@ class MoveIt2Interface(Node):
         """
 
         joint_trajectory = JointTrajectory()
+        joint_trajectory.header.frame_id = self.arm_base_link
         joint_trajectory.joint_names = self.arm_joints
         point = JointTrajectoryPoint()
         point.positions = joint_positions
@@ -629,11 +632,14 @@ class MoveIt2Interface(Node):
 
         return joint_trajectory
 
-    def gripper_close(self, width=0.0, speed=0.2, force=20.0, force_start=0.75, manual_plan: bool = False) -> bool:
+    def gripper_close(self, width=0.0, speed=0.2, force: Optional[float] = None, force_start=0.75, manual_plan: bool = False) -> bool:
         """
         Close gripper. Argument `force_start` (0.0,1.0] can be used to indicate point of the
         trajectory at which force will start being applied.
         """
+
+        if force is None:
+            force = self.gripper_max_force
 
         if not manual_plan:
             joint_trajectory = self.gripper_plan_path(width, speed)

@@ -247,20 +247,20 @@
                 <position_cmd_max>28</position_cmd_max>
 
                 <joint_name>rg2_finger_joint1</joint_name>
-                <initial_position>0</initial_position>
-                <position_p_gain>300</position_p_gain>
-                <position_d_gain>0.5</position_d_gain>
-                <position_i_gain>100</position_i_gain>
+                <initial_position>0.5</initial_position>
+                <position_p_gain>150</position_p_gain>
+                <position_d_gain>0.05</position_d_gain>
+                <position_i_gain>50</position_i_gain>
                 <position_i_min>-10</position_i_min>
                 <position_i_max>10</position_i_max>
                 <position_cmd_min>-10.6</position_cmd_min>
                 <position_cmd_max>10.6</position_cmd_max>
 
                 <joint_name>rg2_finger_joint2</joint_name>
-                <initial_position>0</initial_position>
-                <position_p_gain>300</position_p_gain>
-                <position_d_gain>0.5</position_d_gain>
-                <position_i_gain>100</position_i_gain>
+                <initial_position>0.5</initial_position>
+                <position_p_gain>150</position_p_gain>
+                <position_d_gain>0.05</position_d_gain>
+                <position_i_gain>50</position_i_gain>
                 <position_i_min>-10</position_i_min>
                 <position_i_max>10</position_i_max>
                 <position_cmd_min>-10.6</position_cmd_min>
