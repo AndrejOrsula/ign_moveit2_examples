@@ -35,7 +35,7 @@ def generate_launch_description():
         # MoveIt2 move_group action server
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                [os.path.join(get_package_share_directory('panda_moveit2_config'),
+                [os.path.join(get_package_share_directory('ur5_rg2_moveit2_config'),
                               'launch', 'move_group_action_server.launch.py')]),
             # Simulation time does not function properly (as of Nov 2020), see https://github.com/AndrejOrsula/ign_moveit2/issues/4
             launch_arguments=[('use_sim_time', 'False'),
@@ -56,10 +56,10 @@ def generate_launch_description():
              executable='parameter_bridge',
              name='parameter_bridge_joint_states',
              output='screen',
-             arguments=['/world/default/model/panda/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model',
+             arguments=['/world/default/model/ur5_rg2/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model',
                         '--ros-args', '--log-level', log_level],
              parameters=[{'use_sim_time': use_sim_time}],
-             remappings=[('/world/default/model/panda/joint_state', '/joint_states')]),
+             remappings=[('/world/default/model/ur5_rg2/joint_state', '/joint_states')]),
 
         # JointTrajectory bridge (ROS2 -> IGN)
         Node(package='ros_ign_bridge',
