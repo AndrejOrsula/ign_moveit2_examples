@@ -90,7 +90,7 @@ bool MoveIt2Handler::set_pose_goal(const geometry_msgs::msg::PoseStamped &_targe
 
 bool MoveIt2Handler::set_named_target_goal(const std::string &_named_target)
 {
-  RCLCPP_INFO(this->get_logger(), "Setting goal to named target \"" + _named_target + "\"");
+  RCLCPP_INFO(this->get_logger(), ("Setting goal to named target \"" + _named_target + "\"").c_str());
   return this->move_group_.setNamedTarget(_named_target);
 }
 
