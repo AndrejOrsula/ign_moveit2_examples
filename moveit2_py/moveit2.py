@@ -2,7 +2,7 @@
 A simple python interface with MoveIt2 services (and actions). This is an alternative to
 moveit_commander, which is not yet ported to ROS 2 (as of Oct 2020).
 
-Note: This module is currently configured for Franka Emika Panda robot and testing support for UR5 with RG2.
+Note: This module is currently configured for Franka Emika Panda robot and testing support for UR5 with RG2 and Kinova Gen2 (j2s7s300).
 Note: There is no Ignition-specific code in this module (this repo is just a convinient place).
 """
 
@@ -32,7 +32,7 @@ class MoveIt2Interface(Node):
 
     def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = True, node_name: str = 'ign_moveit2_py', robot_model: str = 'panda'):
         """
-        robot_model - 'panda' and 'ur5_rg2' are supported
+        robot_model - 'panda', 'ur5_rg2' and 'kinova_j2s7s300' are supported
         """
         super().__init__(node_name)
         self.set_parameters([Parameter('use_sim_time',
@@ -111,6 +111,40 @@ class MoveIt2Interface(Node):
             self.gripper_max_width = 1.0471976
             self.gripper_max_speed = 1.57
             self.gripper_max_force = 10.6
+        elif 'kinova_j2s7s300' == robot_model:
+            self.robot_group_name = "j2s7s300_arm_hand"
+            # Arm
+            self.arm_group_name = "j2s7s300_arm"
+            self.arm_joints = ["j2s7s300_joint_1",
+                               "j2s7s300_joint_2",
+                               "j2s7s300_joint_3",
+                               "j2s7s300_joint_4",
+                               "j2s7s300_joint_5",
+                               "j2s7s300_joint_6",
+                               "j2s7s300_joint_7"]
+            self.arm_links = ["j2s7s300_link_base",
+                              "j2s7s300_link_1",
+                              "j2s7s300_link_2",
+                              "j2s7s300_link_3",
+                              "j2s7s300_link_4",
+                              "j2s7s300_link_5",
+                              "j2s7s300_link_6",
+                              "j2s7s300_link_7",
+                              "j2s7s300_end_effector"]
+            self.arm_base_link = self.arm_links[0]
+            self.arm_end_effector = self.arm_links[-1]
+            # Gripper
+            self.gripper_group_name = "hand"
+            self.gripper_joints = ["j2s7s300_joint_finger_1",
+                                   "j2s7s300_joint_finger_2",
+                                   "j2s7s300_joint_finger_3"]
+            self.gripper_max_width = 2.6
+            self.gripper_max_speed = 0.2
+            self.gripper_max_force = 20.0
+            # Kinova gripper is inverted by default (closed at 2.6 width)
+            tmp = self.gripper_close
+            self.gripper_close = self.gripper_open
+            self.gripper_open = tmp
 
         # Publisher of trajectories
         self.joint_trajectory_pub = self.create_publisher(JointTrajectory,
@@ -614,22 +648,6 @@ class MoveIt2Interface(Node):
 
         joint_trajectory = response.motion_plan_response.trajectory.joint_trajectory
 
-        # Mirror motion on the second finger (might be more efficient than double planning)
-        joint_trajectory.joint_names.append(self.gripper_joints[1])
-        for i in range(len(joint_trajectory.points)):
-            if joint_trajectory.points[i].positions:
-                (joint_trajectory.points[i].positions
-                 .append(joint_trajectory.points[i].positions[0]))
-            if joint_trajectory.points[i].velocities:
-                (joint_trajectory.points[i].velocities
-                 .append(joint_trajectory.points[i].velocities[0]))
-            if joint_trajectory.points[i].accelerations:
-                (joint_trajectory.points[i].accelerations
-                 .append(joint_trajectory.points[i].accelerations[0]))
-            if joint_trajectory.points[i].effort:
-                (joint_trajectory.points[i].effort
-                 .append(joint_trajectory.points[i].effort[0]))
-
         return joint_trajectory
 
     def gripper_close(self, width=0.0, speed=0.2, force: Optional[float] = None, force_start=0.75, manual_plan: bool = False) -> bool:
@@ -681,7 +699,7 @@ class MoveIt2Interface(Node):
             joint_trajectory = self.__gripper_trajectory_manual(width)
 
         # Make sure no force is applied anymore
-        joint_trajectory.points[0].effort = [0.0] * 2
+        joint_trajectory.points[0].effort = [0.0] * len(self.gripper_joints)
 
         return self.execute(joint_trajectory, is_gripper=True)
 
@@ -700,7 +718,8 @@ class MoveIt2Interface(Node):
 
         for i in range(2):
             joint_trajectory.points.append(JointTrajectoryPoint())
-            joint_trajectory.points[i].positions = [width/2] * 2
+            joint_trajectory.points[i].positions = [
+                width/2] * len(self.gripper_joints)
             joint_trajectory.points[i].time_from_start.nanosec = int(2e8)
 
         return joint_trajectory

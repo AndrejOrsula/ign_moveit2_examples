@@ -3,7 +3,7 @@
 from moveit2 import MoveIt2Interface
 import rclpy
 import threading
-
+import time
 
 def main(args=None):
     rclpy.init(args=args)
@@ -18,11 +18,13 @@ def main(args=None):
     thread.start()
 
     # Open
-    moveit2.gripper_open(width=0.08, speed=0.2)
+    moveit2.gripper_open(manual_plan=True)
     moveit2.wait_until_executed()
 
+    time.sleep(2)
+
     # Close
-    moveit2.gripper_close(width=0.0, speed=0.2, force=20.0, force_start=0.75)
+    moveit2.gripper_close(manual_plan=True)
     moveit2.wait_until_executed()
 
     rclpy.shutdown()
