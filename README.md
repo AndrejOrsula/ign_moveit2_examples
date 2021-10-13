@@ -28,15 +28,12 @@ To demonstrate Python usage, a minimal [Python MoveIt2 interface](moveit2_py/mov
 
 All examples were tested with the following setup.
 
-- [ROS 2 Foxy](https://index.ros.org/doc/ros2/Installation/Foxy)
-- [MoveIt2](https://moveit.ros.org/install-moveit2/source)
-- [Ignition Dome](https://ignitionrobotics.org/docs/dome/install) (Citadel might also be fully functional, but it was not tested)
-  - `ign-gazebo` >= 4.4
-    - Version is required for [`JointTrajectoryController` system plugin](https://github.com/ignitionrobotics/ign-gazebo/commit/14cc8370f052bf5139018d472914491cf6fef3a4)
-  - `ign-msgs` >= 6.2
-    - Version is required for [`JointTrajectory` message definition](https://github.com/ignitionrobotics/ign-msgs/commit/f53e57e4bf681e5e44d1379d4954efe91fe07a8f)
+- ROS 2 [Foxy](https://docs.ros.org/en/foxy/Installation.html) OR [Rolling](https://docs.ros.org/en/rolling/Installation.html)
+- Ignition [Dome](https://ignitionrobotics.org/docs/dome/install) OR [Fortress (recommended)](https://ignitionrobotics.org/docs/fortress)
+- [MoveIt 2](https://moveit.ros.org/install-moveit2/binary)
+  - Install/build based on the selected ROS 2 release
 - [ros_ign](https://github.com/ignitionrobotics/ros_ign/tree/ros2)
-  - `ros2` branch, containing [`JointTrajectory` message conversion](https://github.com/ignitionrobotics/ros_ign/commit/a4bc25fde117f9ce7279c83dc419bfb0eb3983b9)
+  - Install/build release based on the selected combination of ROS 2 release and Ignition version
 
 Additional robot-specific dependencies are also required, e.g. [panda.repos](panda.repos).
 
