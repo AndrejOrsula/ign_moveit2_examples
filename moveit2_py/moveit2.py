@@ -30,7 +30,7 @@ import math
 
 class MoveIt2Interface(Node):
 
-    def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = True, node_name: str = 'ign_moveit2_py', robot_model: str = 'panda'):
+    def __init__(self, separate_gripper_controller: bool = False, use_sim_time: bool = True, node_name: str = 'ign_moveit2_py', robot_model: str = 'panda', namespace: str = '', prefix: str = '', arm_group_name: Optional[str] = None, gripper_group_name: Optional[str] = None):
         """
         robot_model - 'panda', 'ur5_rg2' and 'kinova_j2s7s300' are supported
         """
@@ -40,7 +40,11 @@ class MoveIt2Interface(Node):
                                        value=use_sim_time)])
 
         self.init_robot(robot_model=robot_model,
-                        separate_gripper_controller=separate_gripper_controller)
+                        separate_gripper_controller=separate_gripper_controller,
+                        namespace=namespace,
+                        prefix=prefix,
+                        arm_group_name=arm_group_name,
+                        gripper_group_name=gripper_group_name)
         self.init_compute_fk()
         self.init_compute_ik()
         self.init_plan_kinematic_path()
@@ -48,7 +52,7 @@ class MoveIt2Interface(Node):
         self.init_gripper()
         self.get_logger().info("ign_moveit2_py initialised successfuly")
 
-    def init_robot(self, robot_model, separate_gripper_controller):
+    def init_robot(self, robot_model, separate_gripper_controller, namespace, prefix, arm_group_name, gripper_group_name):
         """
         Initialise robot groups, links and joints. This would normally get loaded from URDF via
         `moveit_commander`.
@@ -58,28 +62,28 @@ class MoveIt2Interface(Node):
             self.robot_group_name = "panda_arm_hand"
             # Arm
             self.arm_group_name = "panda_arm"
-            self.arm_joints = ["panda_joint1",
-                               "panda_joint2",
-                               "panda_joint3",
-                               "panda_joint4",
-                               "panda_joint5",
-                               "panda_joint6",
-                               "panda_joint7"]
-            self.arm_links = ["panda_link0",
-                              "panda_link1",
-                              "panda_link2",
-                              "panda_link3",
-                              "panda_link4",
-                              "panda_link5",
-                              "panda_link6",
-                              "panda_link7",
-                              "panda_link8"]
+            self.arm_joints = [prefix + "panda_joint1",
+                               prefix + "panda_joint2",
+                               prefix + "panda_joint3",
+                               prefix + "panda_joint4",
+                               prefix + "panda_joint5",
+                               prefix + "panda_joint6",
+                               prefix + "panda_joint7"]
+            self.arm_links = [prefix + "panda_link0",
+                              prefix + "panda_link1",
+                              prefix + "panda_link2",
+                              prefix + "panda_link3",
+                              prefix + "panda_link4",
+                              prefix + "panda_link5",
+                              prefix + "panda_link6",
+                              prefix + "panda_link7",
+                              prefix + "panda_link8"]
             self.arm_base_link = self.arm_links[0]
             self.arm_end_effector = self.arm_links[-1]
             # Gripper
             self.gripper_group_name = "hand"
-            self.gripper_joints = ["panda_finger_joint1",
-                                   "panda_finger_joint2"]
+            self.gripper_joints = [prefix + "panda_finger_joint1",
+                                   prefix + "panda_finger_joint2"]
             self.gripper_max_width = 0.08
             self.gripper_max_speed = 0.2
             self.gripper_max_force = 20.0
@@ -88,26 +92,26 @@ class MoveIt2Interface(Node):
             self.robot_group_name = "ur5_rg2"
             # Arm
             self.arm_group_name = "ur5"
-            self.arm_joints = ["elbow_joint",
-                               "shoulder_lift_joint",
-                               "shoulder_pan_joint",
-                               "wrist_1_joint",
-                               "wrist_2_joint",
-                               "wrist_3_joint"]
-            self.arm_links = ["base_link",
-                              "shoulder_link",
-                              "upper_arm_link",
-                              "forearm_link",
-                              "wrist_1_link",
-                              "wrist_2_link",
-                              "wrist_3_link",
-                              "tool0"]
+            self.arm_joints = [prefix + "elbow_joint",
+                               prefix + "shoulder_lift_joint",
+                               prefix + "shoulder_pan_joint",
+                               prefix + "wrist_1_joint",
+                               prefix + "wrist_2_joint",
+                               prefix + "wrist_3_joint"]
+            self.arm_links = [prefix + "base_link",
+                              prefix + "shoulder_link",
+                              prefix + "upper_arm_link",
+                              prefix + "forearm_link",
+                              prefix + "wrist_1_link",
+                              prefix + "wrist_2_link",
+                              prefix + "wrist_3_link",
+                              prefix + "tool0"]
             self.arm_base_link = self.arm_links[0]
             self.arm_end_effector = self.arm_links[-1]
             # Gripper
             self.gripper_group_name = "rg2"
-            self.gripper_joints = ["rg2_finger_joint1",
-                                   "rg2_finger_joint2"]
+            self.gripper_joints = [prefix + "rg2_finger_joint1",
+                                   prefix + "rg2_finger_joint2"]
             self.gripper_max_width = 1.0471976
             self.gripper_max_speed = 1.57
             self.gripper_max_force = 10.6
@@ -115,29 +119,29 @@ class MoveIt2Interface(Node):
             self.robot_group_name = "j2s7s300_arm_hand"
             # Arm
             self.arm_group_name = "j2s7s300_arm"
-            self.arm_joints = ["j2s7s300_joint_1",
-                               "j2s7s300_joint_2",
-                               "j2s7s300_joint_3",
-                               "j2s7s300_joint_4",
-                               "j2s7s300_joint_5",
-                               "j2s7s300_joint_6",
-                               "j2s7s300_joint_7"]
-            self.arm_links = ["j2s7s300_link_base",
-                              "j2s7s300_link_1",
-                              "j2s7s300_link_2",
-                              "j2s7s300_link_3",
-                              "j2s7s300_link_4",
-                              "j2s7s300_link_5",
-                              "j2s7s300_link_6",
-                              "j2s7s300_link_7",
-                              "j2s7s300_end_effector"]
+            self.arm_joints = [prefix + "j2s7s300_joint_1",
+                               prefix + "j2s7s300_joint_2",
+                               prefix + "j2s7s300_joint_3",
+                               prefix + "j2s7s300_joint_4",
+                               prefix + "j2s7s300_joint_5",
+                               prefix + "j2s7s300_joint_6",
+                               prefix + "j2s7s300_joint_7"]
+            self.arm_links = [prefix + "j2s7s300_link_base",
+                              prefix + "j2s7s300_link_1",
+                              prefix + "j2s7s300_link_2",
+                              prefix + "j2s7s300_link_3",
+                              prefix + "j2s7s300_link_4",
+                              prefix + "j2s7s300_link_5",
+                              prefix + "j2s7s300_link_6",
+                              prefix + "j2s7s300_link_7",
+                              prefix + "j2s7s300_end_effector"]
             self.arm_base_link = self.arm_links[0]
             self.arm_end_effector = self.arm_links[-1]
             # Gripper
             self.gripper_group_name = "hand"
-            self.gripper_joints = ["j2s7s300_joint_finger_1",
-                                   "j2s7s300_joint_finger_2",
-                                   "j2s7s300_joint_finger_3"]
+            self.gripper_joints = [prefix + "j2s7s300_joint_finger_1",
+                                   prefix + "j2s7s300_joint_finger_2",
+                                   prefix + "j2s7s300_joint_finger_3"]
             self.gripper_max_width = 2.6
             self.gripper_max_speed = 0.2
             self.gripper_max_force = 20.0
@@ -146,27 +150,32 @@ class MoveIt2Interface(Node):
             self.gripper_close = self.gripper_open
             self.gripper_open = tmp
 
+        if arm_group_name is not None:
+            self.arm_group_name = arm_group_name
+        if gripper_group_name is not None:
+            self.gripper_group_name = gripper_group_name
+
         # Publisher of trajectories
         self.joint_trajectory_pub = self.create_publisher(JointTrajectory,
-                                                          "joint_trajectory", 1)
+                                                          namespace + "/joint_trajectory", 1)
 
         self.use_separate_gripper_controller = separate_gripper_controller
         if separate_gripper_controller:
             self.gripper_trajectory_pub = self.create_publisher(JointTrajectory,
-                                                                "gripper_trajectory", 1)
+                                                                namespace + "/gripper_trajectory", 1)
 
         # Subscriber of current joint states
         self.joint_state = JointState()
         self.joint_state_mutex = threading.Lock()
         self.joint_state_sub = self.create_subscription(JointState,
-                                                        "joint_states",
+                                                        namespace + "/joint_states",
                                                         self.joint_state_callback, 1)
 
         # Subscriber of joint trajectory progress
         self.joint_progress = 1.0
         self.joint_progress_cond = threading.Condition()
         self.joint_progress_sub = self.create_subscription(Float32,
-                                                           "joint_trajectory_progress",
+                                                           namespace + "/joint_trajectory_progress",
                                                            self.joint_progress_callback, 1)
 
     def joint_state_callback(self, msg):
