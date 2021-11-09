@@ -5,13 +5,17 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
     # Launch Arguments
+    world_name = LaunchConfiguration('world_name', default="default")
+    robot_model = LaunchConfiguration('robot_model', default="panda")
+    robot_name = LaunchConfiguration('robot_name', default=robot_model)
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
     config_rviz2 = LaunchConfiguration('config_rviz2', default=os.path.join(get_package_share_directory('ign_moveit2'),
                                                                             'launch', 'rviz.rviz'))
@@ -19,6 +23,18 @@ def generate_launch_description():
 
     return LaunchDescription([
         # Launch Arguments
+        DeclareLaunchArgument(
+            'world_name',
+            default_value=world_name,
+            description="Name of the world that is being used"),
+        DeclareLaunchArgument(
+            'robot_model',
+            default_value=robot_model,
+            description="Model of the robot that determines package name ('panda', 'ur5_rg2' or 'kinova_j2s7s300')"),
+        DeclareLaunchArgument(
+            'robot_name',
+            default_value=robot_name,
+            description="Name of the robot that is being used"),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value=use_sim_time,
@@ -34,11 +50,11 @@ def generate_launch_description():
 
         # MoveIt2 move_group action server
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [os.path.join(get_package_share_directory('panda_moveit2_config'),
-                              'launch', 'move_group_action_server.launch.py')]),
-            # Simulation time does not function properly (as of Nov 2020), see https://github.com/AndrejOrsula/ign_moveit2/issues/4
-            launch_arguments=[('use_sim_time', 'False'),
+            PythonLaunchDescriptionSource(PathJoinSubstitution(
+                [FindPackageShare([robot_model, "_moveit2_config"]),
+                 "launch",
+                 "move_group_action_server.launch.py"])),
+            launch_arguments=[('use_sim_time', use_sim_time),
                               ('config_rviz2', config_rviz2),
                               ('log_level', log_level)]),
 
@@ -56,10 +72,10 @@ def generate_launch_description():
              executable='parameter_bridge',
              name='parameter_bridge_joint_states',
              output='screen',
-             arguments=['/world/default/model/panda/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model',
+             arguments=[['/world/', world_name, '/model/', robot_name, '/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model'],
                         '--ros-args', '--log-level', log_level],
              parameters=[{'use_sim_time': use_sim_time}],
-             remappings=[('/world/default/model/panda/joint_state', '/joint_states')]),
+             remappings=[(['/world/', world_name, '/model/', robot_name, '/joint_state'], '/joint_states')]),
 
         # JointTrajectory bridge (ROS2 -> IGN)
         Node(package='ros_ign_bridge',

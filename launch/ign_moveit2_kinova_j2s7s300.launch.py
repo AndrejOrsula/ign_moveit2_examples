@@ -1,5 +1,7 @@
 """Launch MoveIt2 move_group action server and the required bridges between Ignition and ROS 2"""
 
+# Note: This launch file is deprecated, use ign_moveit2 with launch arguments instead
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
