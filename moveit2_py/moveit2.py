@@ -453,6 +453,9 @@ class MoveIt2Interface(Node):
         self.kinematic_path_request.motion_plan_request.workspace_parameters.header.stamp = \
             self._clock.now().to_msg()
 
+        # Add current joint state to ignore errors
+        self.kinematic_path_request.motion_plan_request.start_state.joint_state = self.get_joint_state()
+
         # Stamp message with current time
         clock_time_now_msg = self._clock.now().to_msg()
         self.kinematic_path_request.motion_plan_request.workspace_parameters.header.stamp = \
