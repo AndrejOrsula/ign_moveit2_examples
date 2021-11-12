@@ -394,12 +394,12 @@ class MoveIt2Interface(Node):
             self.arm_base_link
         # self.kinematic_path_request.motion_plan_request.workspace_parameters.header.stamp = \
         # "Set during request"
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.x = -0.855
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.y = -0.855
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.z = -0.36
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.x = 0.855
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.y = 0.855
-        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.z = 1.19
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.x = -2.0
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.y = -2.0
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.min_corner.z = -2.0
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.x = 2.0
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.y = 2.0
+        self.kinematic_path_request.motion_plan_request.workspace_parameters.max_corner.z = 2.0
         # self.kinematic_path_request.motion_plan_request.start_state = "Ignored"
         self.kinematic_path_request.motion_plan_request.goal_constraints = \
             [Constraints()]
