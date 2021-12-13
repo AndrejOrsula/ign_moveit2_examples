@@ -1,5 +1,7 @@
 # ign_moveit2
 
+> This branch is now **deprecated** since [ign_ros2_control](https://github.com/ignitionrobotics/ign_ros2_control) has been developed. Please, see the [default](https://github.com/AndrejOrsula/ign_moveit2_examples) branch if you are interested in MoveIt 2 examples inside Ignition Gazebo that utilise `ign_ros2_control`.
+
 Examples of using [MoveIt2](https://moveit.ros.org) for planning motions that are executed inside [Ignition Gazebo](https://ignitionrobotics.org) simulation environment. These examples do NOT make use of [ros2_control](https://github.com/ros-controls/ros2_control)\*, but instead employ [`JointTrajectoryController`](https://github.com/ignitionrobotics/ign-gazebo/blob/ign-gazebo4/src/systems/joint_trajectory_controller/JointTrajectoryController.hh) Ignition system plugin with the communication graph illustrated below. All communication and `move_group` action server can be setup using [`ign_moveit2.launch.py`](launch/ign_moveit2.launch.py), which then allows usage with both C++ and Python interface.
 
 ![ign_moveit2_communication_scheme](_graphics/ign_moveit2_communication.svg)
