@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ign_moveit2)
+project(ign_moveit2_examples)
 
 # Default to C11
 if(NOT CMAKE_C_STANDARD)
@@ -23,7 +23,6 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_msgs REQUIRED)
@@ -43,11 +42,6 @@ ament_target_dependencies(${EXECUTABLE_0}
 install(TARGETS
     ${EXECUTABLE_0}
     DESTINATION lib/${PROJECT_NAME}
-)
-
-# Install python modules
-ament_python_install_module(
-    moveit2_py/moveit2.py
 )
 
 # Install python examples
