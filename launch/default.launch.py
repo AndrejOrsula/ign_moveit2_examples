@@ -1,14 +1,16 @@
 #!/usr/bin/env -S ros2 launch
 """Launch default world with the default robot (configurable)"""
 
+from os import path
+from typing import List
+
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
 from launch_ros.substitutions import FindPackageShare
+
+from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from os import path
-from typing import List
 
 
 def generate_launch_description() -> LaunchDescription:

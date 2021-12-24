@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 """Example that uses MoveIt 2 to follow a target inside Ignition Gazebo"""
 
-from robots import panda
-
+import rclpy
 from geometry_msgs.msg import Pose, PoseStamped
 from pymoveit2 import MoveIt2
+from pymoveit2.robots import panda
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
-from rclpy.qos import (
-    QoSProfile,
-    QoSDurabilityPolicy,
-    QoSReliabilityPolicy,
-    QoSHistoryPolicy,
-)
-import rclpy
+from rclpy.qos import QoSProfile
 
 
 class MoveItFollowTarget(Node):
@@ -24,15 +18,19 @@ class MoveItFollowTarget(Node):
         # Create callback group that allows execution of callbacks in parallel without restrictions
         self._callback_group = ReentrantCallbackGroup()
 
-        # Create MoveIt2 interface
+        # Create MoveIt 2 interface
         self._moveit2 = MoveIt2(
             node=self,
             joint_names=panda.joint_names(),
             base_link_name=panda.base_link_name(),
             end_effector_name=panda.end_effector_name(),
+            group_name=panda.MOVE_GROUP_ARM,
             execute_via_moveit=True,
             callback_group=self._callback_group,
         )
+        # Use upper joint velocity and acceleration limits
+        self._moveit2.max_velocity = 1.0
+        self._moveit2.max_acceleration = 1.0
 
         # Create a subscriber for target pose
         self.__previous_target_pose = Pose()
@@ -40,43 +38,31 @@ class MoveItFollowTarget(Node):
             msg_type=PoseStamped,
             topic="/target_pose",
             callback=self.target_pose_callback,
-            qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                durability=QoSDurabilityPolicy.VOLATILE,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
-            ),
+            qos_profile=QoSProfile(depth=1),
             callback_group=self._callback_group,
         )
 
-        # Setup executor
-        executor = rclpy.executors.MultiThreadedExecutor(2)
-        executor.add_node(self)
+        self.get_logger().info("Initialization successful.")
 
     def target_pose_callback(self, msg: PoseStamped):
         """
         Plan and execute trajectory each time the target pose is changed
         """
 
-        if self.__previous_target_pose != msg.pose:
+        # Return if target pose is unchanged
+        if msg.pose == self.__previous_target_pose:
+            return
 
-            # Plan and execute path
-            self._moveit2.move_to_pose(
-                position=(
-                    msg.pose.position.x,
-                    msg.pose.position.y,
-                    msg.pose.position.z,
-                ),
-                quat_xyzw=(
-                    msg.pose.orientation.x,
-                    msg.pose.orientation.y,
-                    msg.pose.orientation.z,
-                    msg.pose.orientation.w,
-                ),
-            )
+        self.get_logger().info("Target pose has changed. Planning and executing...")
 
-            # Update for next callback
-            self.__previous_target_pose = msg.pose
+        # Plan and execute motion
+        self._moveit2.move_to_pose(
+            position=msg.pose.position,
+            quat_xyzw=msg.pose.orientation,
+        )
+
+        # Update for next callback
+        self.__previous_target_pose = msg.pose
 
 
 def main(args=None):
@@ -84,9 +70,13 @@ def main(args=None):
     rclpy.init(args=args)
 
     target_follower = MoveItFollowTarget()
-    rclpy.spin(target_follower, executor=target_follower.executor)
+
+    executor = rclpy.executors.MultiThreadedExecutor(2)
+    executor.add_node(target_follower)
+    executor.spin()
 
     rclpy.shutdown()
+    exit(0)
 
 
 if __name__ == "__main__":

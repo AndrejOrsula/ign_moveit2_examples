@@ -12,7 +12,7 @@
       </dart>
     </plugin>
     <physics name="physics_config" type="dart">
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.005</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
 
@@ -20,7 +20,7 @@
     <plugin filename="ignition-gazebo-scene-broadcaster-system" name="ignition::gazebo::systems::SceneBroadcaster">
     </plugin>
     <scene>
-      <ambient>0.4 0.4 0.4</ambient>
+      <ambient>0.8 0.8 0.8</ambient>
       <grid>false</grid>
     </scene>
 
@@ -43,7 +43,7 @@
         <linear>0.01</linear>
         <quadratic>0.001</quadratic>
       </attenuation>
-      <direction>-0.5 0.1 -0.9</direction>
+      <direction>-0.3 0.3 -0.9</direction>
     </light>
 
 
@@ -66,7 +66,7 @@
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>10 10</size>
+              <size>4 4</size>
             </plane>
           </geometry>
           <material>
