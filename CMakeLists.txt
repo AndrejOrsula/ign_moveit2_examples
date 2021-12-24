@@ -28,21 +28,21 @@ find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
-# # Executables
-# set(EXECUTABLE_0 example_ign_moveit2)
-# # Executable 0 (example)
-# add_executable(${EXECUTABLE_0} examples/cpp/${EXECUTABLE_0}.cpp)
-# ament_target_dependencies(${EXECUTABLE_0}
-#     rclcpp
-#     moveit_ros_planning_interface
-#     moveit_msgs
-# )
-
-# # Install cpp targets
-# install(TARGETS
-#     ${EXECUTABLE_0}
-#     DESTINATION lib/${PROJECT_NAME}
-# )
+# Install C++ examples
+set(EXAMPLES_CPP_DIR examples/cpp)
+# Example 0 - Follow target
+set(EXECUTABLE_0 ex_follow_target)
+add_executable(${EXECUTABLE_0} ${EXAMPLES_CPP_DIR}/${EXECUTABLE_0}.cpp)
+ament_target_dependencies(${EXECUTABLE_0}
+    rclcpp
+    moveit_ros_planning_interface
+    moveit_msgs
+    geometry_msgs
+)
+install(TARGETS
+    ${EXECUTABLE_0}
+    DESTINATION lib/${PROJECT_NAME}
+)
 
 # Install python examples
 set(EXAMPLES_PY_DIR examples/py)
