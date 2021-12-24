@@ -44,16 +44,11 @@ install(TARGETS
     DESTINATION lib/${PROJECT_NAME}
 )
 
-# Install python examples
+# Install Python examples
 set(EXAMPLES_PY_DIR examples/py)
 install(PROGRAMS
     ${EXAMPLES_PY_DIR}/ex_follow_target.py
-    # ${EXAMPLES_PY_DIR}/example_pose_goal.py
-    # ${EXAMPLES_PY_DIR}/example_follow_object.py
-    # ${EXAMPLES_PY_DIR}/example_follow_object_wait_until_executed.py
-    # ${EXAMPLES_PY_DIR}/example_follow_object_direct.py
-    # ${EXAMPLES_PY_DIR}/example_gripper.py
-    # ${EXAMPLES_PY_DIR}/example_throw.py
+    ${EXAMPLES_PY_DIR}/ex_throw_object.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
