@@ -24,9 +24,8 @@ endif()
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
-find_package(moveit_msgs REQUIRED)
-find_package(trajectory_msgs REQUIRED)
 
 # Install C++ examples
 set(EXAMPLES_CPP_DIR examples/cpp)
@@ -35,9 +34,8 @@ set(EXECUTABLE_0 ex_follow_target)
 add_executable(${EXECUTABLE_0} ${EXAMPLES_CPP_DIR}/${EXECUTABLE_0}.cpp)
 ament_target_dependencies(${EXECUTABLE_0}
     rclcpp
-    moveit_ros_planning_interface
-    moveit_msgs
     geometry_msgs
+    moveit_ros_planning_interface
 )
 install(TARGETS
     ${EXECUTABLE_0}
