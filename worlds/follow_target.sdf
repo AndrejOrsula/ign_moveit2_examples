@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="ign_moveit2_follow_target_world">
+
+    <!-- Physics -->
+    <plugin filename="ignition-gazebo-physics-system" name="ignition::gazebo::systems::Physics">
+      <engine>
+        <filename>ignition-physics-dartsim-plugin</filename>
+      </engine>
+      <dart>
+        <collision_detector>bullet</collision_detector>
+      </dart>
+    </plugin>
+    <physics name="physics_config" type="dart">
+      <max_step_size>0.005</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- Scene -->
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="ignition::gazebo::systems::SceneBroadcaster">
+    </plugin>
+    <scene>
+      <ambient>0.8 0.8 0.8</ambient>
+      <grid>false</grid>
+    </scene>
+
+    <!-- User Commands (transform control) -->
+    <plugin filename="ignition-gazebo-user-commands-system" name="ignition::gazebo::systems::UserCommands">
+    </plugin>
+
+
+    <!--              -->
+    <!-- Illumination -->
+    <!--              -->
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.3 0.3 -0.9</direction>
+    </light>
+
+
+    <!--        -->
+    <!-- Models -->
+    <!--        -->
+    <!-- Ground -->
+    <model name="ground_plane">
+      <pose>0 0 0 0 0 0</pose>
+      <static>true</static>
+      <link name="ground_plane_link">
+        <collision name="ground_plane_collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="ground_plane_visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>4 4</size>
+            </plane>
+          </geometry>
+          <material>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Static target -->
+    <model name="target">
+      <static>true</static>
+      <pose>0.5 -0.25 0.5 3.1415927 0 0</pose>
+      <link name="target_link">
+        <visual name="target_visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.04</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
+          </material>
+        </visual>
+      </link>
+      <!-- Pose publisher plugin, used to determine the target pose to reach -->
+      <plugin filename="ignition-gazebo-pose-publisher-system" name="ignition::gazebo::systems::PosePublisher">
+        <publish_nested_model_pose>true</publish_nested_model_pose>
+        <publish_link_pose>false</publish_link_pose>
+        <publish_collision_pose>false</publish_collision_pose>
+        <publish_visual_pose>false</publish_visual_pose>
+      </plugin>
+    </model>
+
+  </world>
+</sdf>

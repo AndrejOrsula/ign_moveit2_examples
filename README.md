@@ -1,80 +1,110 @@
-# ign_moveit2
+# ign_moveit2_examples
 
-Examples of using [MoveIt2](https://moveit.ros.org) for planning motions that are executed inside [Ignition Gazebo](https://ignitionrobotics.org) simulation environment. These examples do NOT make use of [ros2_control](https://github.com/ros-controls/ros2_control)\*, but instead employ [`JointTrajectoryController`](https://github.com/ignitionrobotics/ign-gazebo/blob/ign-gazebo4/src/systems/joint_trajectory_controller/JointTrajectoryController.hh) Ignition system plugin with the communication graph illustrated below. All communication and `move_group` action server can be setup using [`ign_moveit2.launch.py`](launch/ign_moveit2.launch.py), which then allows usage with both C++ and Python interface.
+C++ and Python examples of using MoveIt 2 for planning motions that are executed inside Ignition Gazebo simulation environment. These examples make use of [ros2_control](https://github.com/ros-controls/ros2_control) via [ign_ros2_control](https://github.com/ignitionrobotics/ign_ros2_control).
 
-![ign_moveit2_communication_scheme](_graphics/ign_moveit2_communication.svg)
+> For legacy approach using [`JointTrajectoryController`](https://github.com/ignitionrobotics/ign-gazebo/blob/ign-gazebo4/src/systems/joint_trajectory_controller/JointTrajectoryController.hh) Ignition plugin, please see [legacy_jtc_ign_plugin](https://github.com/AndrejOrsula/ign_moveit2/tree/legacy_jtc_ign_plugin) branch.
 
-This repository previously contained also `JointTrajectoryController` which is now merged into `ign-gazebo`. Therefore, this repository should serve as a template/example of using such setup and no longer needs to be installed.
+| <img width="100%" src="https://user-images.githubusercontent.com/22929099/147374612-3d0209d3-574e-4a4f-8077-edbbcf8fc47d.gif" alt="Animation of ex_follow_target"/> | <img width="100%" src="https://user-images.githubusercontent.com/22929099/147374613-ad15aa1a-deaf-4dcd-92b0-1a53d0097467.gif" alt="Animation of ex_throw_object"/> |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|                                                                            Follow Target                                                                            |                                                                            Throw Object                                                                            |
 
-To demonstrate Python usage, a minimal [Python MoveIt2 interface](moveit2_py/moveit2.py) is also provided in this repository for [Franka Emika Panda](https://github.com/AndrejOrsula/panda_ign.git) because `moveit_commander` is not yet ported as of writing this ([tracker](https://github.com/ros-planning/moveit2/issues/314)). Once Python bindings for MoveIt2 are migrated, it is recommended to use those instead.
+At the time of writing these, there are no official Python bindings for MoveIt 2. Therefore, [pymoveit2](https://github.com/AndrejOrsula/pymoveit2) module is employed as the MoveIt 2 interface in all Python examples.
 
-\* Once `ros2_control` is ready to use (which it might already be at the time of reading this), then developing and using `ign_ros2_control` similar to [gazebo_ros2_control](https://github.com/ros-simulation/gazebo_ros2_control) might be recommended over the solution proposed in this repository.
+## Instructions
+
+### Requirements
+
+- **OS:** Ubuntu 20.04 (Focal)
+  - Other distributions might work (not tested).
+
+### Dependencies
+
+These are the primary dependencies required to use this project.
+
+- ROS 2 [Rolling](https://docs.ros.org/en/rolling/Installation.html)
+  - [Galactic](https://docs.ros.org/en/galactic/Installation.html) should also work without any issues (not tested)
+- Ignition [Fortress](https://ignitionrobotics.org/docs/fortress)
+  - [Citadel](https://ignitionrobotics.org/docs/citadel) and [Edifice](https://ignitionrobotics.org/docs/edifice) should also work (not tested)
+- [MoveIt 2](https://moveit.ros.org/install-moveit2/binary)
+  - Install/build a version based on the selected ROS 2 release
+
+Furthermore, the following packages are required.
+
+- [ros_ign](https://github.com/ignitionrobotics/ros_ign/tree/ros2)
+  - Install/build a version based on the selected combination of ROS 2 release and Ignition version
+- [ign_ros2_control](https://github.com/ignitionrobotics/ign_ros2_control)
+  - Build a version based on the selected combination of ROS 2 release and Ignition version
+
+Until [ros2_controllers#225](https://github.com/ros-controls/ros2_controllers/pull/225) is merged and released, `ros2_controllers` must be built from source in order to enable the use of effort command interface inside Ignition Gazebo.
+
+- [AndrejOrsula/ros2_controllers:jtc_effort](https://github.com/AndrejOrsula/ros2_controllers/tree/jtc_effort) was tested and can be used for this purpose
+
+Additional dependencies for `pymoveit2` and robot models are listed under [ign_moveit2_examples.repos](./ign_moveit2_examples.repos) and pulled via git during installation. Please, see instructions below.
+
+### Building
+
+Clone this repository and import VCS dependencies. Then install dependencies and build with [colcon](https://colcon.readthedocs.io).
+
+```bash
+# Clone this repository into your favourite ROS 2 workspace
+git clone https://github.com/AndrejOrsula/ign_moveit2_examples.git
+# Import additional git dependencies
+vcs import < ign_moveit2_examples/ign_moveit2_examples.repos
+# Install external dependencies via rosdep
+rosdep install -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO}
+# Build with colcon
+colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
+```
+
+### Sourcing
+
+Before utilising this package, remember to source the ROS 2 workspace overlay.
+
+```bash
+source ${IGN_MOVEIT2_EXAMPLES_WS_DIR}/install/local_setup.bash
+```
+
+This enables:
+
+- Execution of scripts and examples via `ros2 run ign_moveit2_examples <executable>`
+- Launching of setup scripts via `ros2 launch ign_moveit2_examples <launch_script>`
+- Discoverability of shared resources
+
+## Examples
+
+In order to run any of the included examples, just launch the corresponding script.
+
+### Follow Target
+
+```bash
+# C++
+ros2 launch ign_moveit2_examples ex_cpp_follow_target.launch.py
+# Python
+ros2 launch ign_moveit2_examples ex_py_follow_target.launch.py
+```
+
+### Throw Object
+
+```bash
+# Python
+ros2 launch ign_moveit2_examples ex_py_throw_object.launch.py
+```
 
 ## Directory Structure
 
 ```bash
-├── launch
-    ├── ign_moveit2.launch.py    # Helpful launch file that starts up MoveIt2 move_group action server and bridges between ROS 2 and Ignition
-    └── examples                 # Launch files for examples
-├── examples                     # C++ and Python examples
-├── moveit2_py                   # Python module for interfacing with MoveIt2 (temporary substitute for moveit_commander)
-├── worlds
-    ├── panda_follow.sdf         # Gazebo world for follow examples
-    └── panda_throw.sdf          # Gazebo world for throw example
-└── panda.repos                  # List of additional dependencies for `Franka Emika Panda`
+.
+├── examples/                      # [dir] Nodes used for examples
+    ├── cpp/                       # [dir] C++ nodes
+    └── py/                        # [dir] Python nodes
+├── launch/                        # [dir] Launch scripts for examples
+    ├── robots/                    # [dir] Launch scripts that spawn robots into environment
+    ├── worlds/                    # [dir] Launch scripts that setup the environment
+    ├── default.launch.py          # Default launch script used by all edxamples
+    ├── ex_cpp_*.launch.py         # C++ launch scripts
+    └── ex_py_*.launch.py          # Python launch scripts
+├── rviz/ign_moveit2_examples.rviz # RViz2 config for motion planning with MoveIt 2
+├── worlds/                        # [dir] World descriptors
+├── CMakeLists.txt                 # Colcon-enabled CMake recipe
+└── package.xml                    # ROS 2 package metadata
 ```
-
-## Dependencies
-
-All examples were tested with the following setup.
-
-- ROS 2 [Foxy](https://docs.ros.org/en/foxy/Installation.html) OR [Rolling](https://docs.ros.org/en/rolling/Installation.html)
-- Ignition [Dome](https://ignitionrobotics.org/docs/dome/install) OR [Fortress (recommended)](https://ignitionrobotics.org/docs/fortress)
-- [MoveIt 2](https://moveit.ros.org/install-moveit2/binary)
-  - Install/build based on the selected ROS 2 release
-- [ros_ign](https://github.com/ignitionrobotics/ros_ign/tree/ros2)
-  - Install/build release based on the selected combination of ROS 2 release and Ignition version
-
-Additional robot-specific dependencies are also required, e.g. [panda.repos](panda.repos).
-
-## Examples
-
-### Building
-
-This step is required to install [Python MoveIt2 interface](moveit2_py/moveit2.py) and additional robot-specific dependencies for Franka Emika Panda in order to try out the examples.
-
-The recommended way is to clone this repository, clone dependencies and build with `colcon`.
-
-```bash
-export PARENT_DIR=${PWD}
-mkdir -p ign_moveit2/src && cd ign_moveit2/src
-git clone https://github.com/AndrejOrsula/ign_moveit2.git
-vcs import < ign_moveit2/panda.repos
-cd ..
-rosdep install --from-paths src -i -y --rosdistro ${ROS_DISTRO}
-colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
-```
-
-### Environment
-
-First, remember to source the ROS 2 workspace overlay before trying out any of the examples below.
-
-```bash
-source ${PARENT_DIR}/ign_moveit2/install/local_setup.bash
-```
-
-#### Follow Example
-
-```bash
-ros2 launch ign_moveit2 example_follow_object.launch.py
-```
-
-![follow](_graphics/ign_moveit2_follow.gif)
-
-#### Throw Example
-
-```bash
-ros2 launch ign_moveit2 example_throw.launch.py
-```
-
-![throw](_graphics/ign_moveit2_throw.gif)

@@ -1,9 +1,0 @@
-repositories:
-  panda_ign:
-    type: git
-    url: https://github.com/AndrejOrsula/panda_ign.git
-    version: master
-  panda_moveit2_config:
-    type: git
-    url: https://github.com/AndrejOrsula/panda_moveit2_config.git
-    version: master

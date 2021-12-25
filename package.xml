@@ -1,24 +1,32 @@
 <?xml version="1.0"?>
 <package format="3">
-    <name>ign_moveit2</name>
-    <version>1.0.0</version>
-    <description>MoveIt2 interface for Ignition Gazebo</description>
-    <maintainer email="orsula.andrej@gmail.com">Andrej Orsula</maintainer>
-    <author>Andrej Orsula</author>
-    <license>BSD</license>
+  <name>ign_moveit2_examples</name>
+  <version>1.0.0</version>
+  <description>C++ and Python examples of using MoveIt 2 for planning motions that are executed inside Ignition Gazebo simulation environment</description>
+  <maintainer email="orsula.andrej@gmail.com">Andrej Orsula</maintainer>
+  <author>Andrej Orsula</author>
+  <license>Apache License 2.0</license>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <depend>rclcpp</depend>
-    <depend>moveit_ros_planning_interface</depend>
-    <depend>moveit_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>moveit_ros_planning_interface</depend>
 
-    <exec_depend>rclpy</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ignition_ros2_control</exec_depend>
+  <exec_depend>pymoveit2</exec_depend>
+  <exec_depend>ros_ign_bridge</exec_depend>
+  <exec_depend>ros_ign_gazebo</exec_depend>
+  <exec_depend>rviz2</exec_depend>
 
-    <test_depend>ament_lint_auto</test_depend>
-    <test_depend>ament_lint_common</test_depend>
+  <exec_depend>panda_description</exec_depend>
+  <exec_depend>panda_moveit_config</exec_depend>
 
-    <export>
-        <build_type>ament_cmake</build_type>
-    </export>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
