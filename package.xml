@@ -14,7 +14,7 @@
   <depend>moveit_ros_planning_interface</depend>
 
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>ignition_ros2_control</exec_depend>
+  <exec_depend>ign_ros2_control</exec_depend>
   <exec_depend>pymoveit2</exec_depend>
   <exec_depend>ros_ign_bridge</exec_depend>
   <exec_depend>ros_ign_gazebo</exec_depend>
