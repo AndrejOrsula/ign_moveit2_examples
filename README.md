@@ -1,6 +1,6 @@
 # ign_moveit2_examples
 
-C++ and Python examples of using MoveIt 2 for planning motions that are executed inside Ignition Gazebo simulation environment. These examples make use of [ros2_control](https://github.com/ros-controls/ros2_control) via [ign_ros2_control](https://github.com/ignitionrobotics/ign_ros2_control).
+C++ and Python examples of using MoveIt 2 for planning motions that are executed inside ~~Ignition~~ Gazebo simulation environment. These examples make use of [ros2_control](https://github.com/ros-controls/ros2_control) via [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control).
 
 > For legacy approach using [`JointTrajectoryController`](https://github.com/ignitionrobotics/ign-gazebo/blob/ign-gazebo4/src/systems/joint_trajectory_controller/JointTrajectoryController.hh) Ignition plugin, please see [legacy_jtc_ign_plugin](https://github.com/AndrejOrsula/ign_moveit2/tree/legacy_jtc_ign_plugin) branch.
 
@@ -8,14 +8,9 @@ C++ and Python examples of using MoveIt 2 for planning motions that are executed
 | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 |                                                                            Follow Target                                                                            |                                                                            Throw Object                                                                            |
 
-At the time of writing these, there are no official Python bindings for MoveIt 2. Therefore, [pymoveit2](https://github.com/AndrejOrsula/pymoveit2) module is employed as the MoveIt 2 interface in all Python examples.
+At the time of writing these examples, there were no official Python bindings for MoveIt 2. Therefore, [pymoveit2](https://github.com/AndrejOrsula/pymoveit2) module is employed as the MoveIt 2 interface in all Python examples.
 
 ## Instructions
-
-### Requirements
-
-- **OS:** Ubuntu 20.04 (Focal)
-  - Other distributions might work (not tested).
 
 ### Dependencies
 
@@ -43,15 +38,15 @@ colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=
 
 ### Sourcing
 
-Before utilising this package, remember to source the ROS 2 workspace overlay.
+Before utilising this package, remember to source the ROS 2 workspace.
 
 ```bash
-source ${IGN_MOVEIT2_EXAMPLES_WS_DIR}/install/local_setup.bash
+source install/local_setup.bash
 ```
 
 This enables:
 
-- Execution of scripts and examples via `ros2 run ign_moveit2_examples <executable>`
+- Execution of binaries, scripts and examples via `ros2 run ign_moveit2_examples <executable>`
 - Launching of setup scripts via `ros2 launch ign_moveit2_examples <launch_script>`
 - Discoverability of shared resources
 
