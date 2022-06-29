@@ -7,3 +7,15 @@ repositories:
     type: git
     url: https://github.com/AndrejOrsula/panda_ign_moveit2.git
     version: master
+  ros_ign:
+    type: git
+    url: https://github.com/ignitionrobotics/ros_ign.git
+    version: galactic
+  ign_ros2_control:
+    type: git
+    url: https://github.com/AndrejOrsula/ign_ros2_control.git
+    version: devel
+  ros2_controllers:
+    type: git
+    url: https://github.com/AndrejOrsula/ros2_controllers.git
+    version: jtc_effort

@@ -21,38 +21,23 @@ At the time of writing these, there are no official Python bindings for MoveIt 2
 
 These are the primary dependencies required to use this project.
 
-- ROS 2 [Rolling](https://docs.ros.org/en/rolling/Installation.html)
-  - [Galactic](https://docs.ros.org/en/galactic/Installation.html) should also work without any issues (not tested)
-- Ignition [Fortress](https://ignitionrobotics.org/docs/fortress)
-  - [Citadel](https://ignitionrobotics.org/docs/citadel) and [Edifice](https://ignitionrobotics.org/docs/edifice) should also work (not tested)
-- [MoveIt 2](https://moveit.ros.org/install-moveit2/binary)
-  - Install/build a version based on the selected ROS 2 release
+- ROS 2 [Galactic](https://docs.ros.org/en/galactic/Installation.html)
+- Gazebo [Fortress](https://gazebosim.org/docs/fortress)
 
-Furthermore, the following packages are required.
-
-- [ros_ign](https://github.com/ignitionrobotics/ros_ign/tree/ros2)
-  - Install/build a version based on the selected combination of ROS 2 release and Ignition version
-- [ign_ros2_control](https://github.com/ignitionrobotics/ign_ros2_control)
-  - Build a version based on the selected combination of ROS 2 release and Ignition version
-
-Until [ros2_controllers#225](https://github.com/ros-controls/ros2_controllers/pull/225) is merged and released, `ros2_controllers` must be built from source in order to enable the use of effort command interface inside Ignition Gazebo.
-
-- [AndrejOrsula/ros2_controllers:jtc_effort](https://github.com/AndrejOrsula/ros2_controllers/tree/jtc_effort) was tested and can be used for this purpose
-
-Additional dependencies for `pymoveit2` and robot models are listed under [ign_moveit2_examples.repos](./ign_moveit2_examples.repos) and pulled via git during installation. Please, see instructions below.
+All additional dependencies are either pulled via [vcstool](https://wiki.ros.org/vcstool) ([ign_moveit2_examples.repos](./ign_moveit2_examples.repos)) or installed via [rosdep](https://wiki.ros.org/rosdep) during the building process below.
 
 ### Building
 
-Clone this repository and import VCS dependencies. Then install dependencies and build with [colcon](https://colcon.readthedocs.io).
+Clone this repository, import dependencies, install dependencies and build with [colcon](https://colcon.readthedocs.io).
 
 ```bash
 # Clone this repository into your favourite ROS 2 workspace
 git clone https://github.com/AndrejOrsula/ign_moveit2_examples.git
-# Import additional git dependencies
+# Import dependencies
 vcs import < ign_moveit2_examples/ign_moveit2_examples.repos
-# Install external dependencies via rosdep
-rosdep install -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO}
-# Build with colcon
+# Install dependencies
+IGNITION_VERSION=fortress rosdep install -y -r -i --rosdistro ${ROS_DISTRO} --from-paths .
+# Build
 colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
 ```
 
