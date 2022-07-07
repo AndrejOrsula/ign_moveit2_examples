@@ -98,7 +98,7 @@ class MoveItThrowObject(Node):
         self._moveit2.max_velocity = 1.0
         self._moveit2.max_acceleration = 1.0
 
-        # Throw itselt
+        # Throw itself
         joint_configuration_throw = [0.0, 1.0, 0.0, -1.1, 0.0, 1.9, 0.8]
         self._moveit2.move_to_configuration(joint_configuration_throw)
 
