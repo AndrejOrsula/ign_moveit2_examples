@@ -1,6 +1,9 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
+ci:
+  skip: [hadolint-docker]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
@@ -41,6 +44,12 @@ repos:
     rev: 0.7.14
     hooks:
       - id: mdformat
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.10.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008]
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.1.0
