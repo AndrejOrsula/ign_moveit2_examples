@@ -9,6 +9,7 @@ ARG WS_DIR=/root/ws
 ENV WS_DIR=${WS_DIR}
 ENV WS_SRC_DIR=${WS_DIR}/src
 ENV WS_INSTALL_DIR=${WS_DIR}/install
+ENV WS_LOG_DIR=${WS_DIR}/log
 WORKDIR ${WS_DIR}
 
 ### Install Gazebo
@@ -19,20 +20,28 @@ RUN apt-get update && \
     ignition-${IGNITION_VERSION} && \
     rm -rf /var/lib/apt/lists/*
 
-### Copy over ign_moveit2_examples
-COPY ./ ${WS_SRC_DIR}/ign_moveit2_examples/
-
-### Import and install dependencies, then build ign_moveit2_examples
-WORKDIR ${WS_DIR}
-RUN vcs import ${WS_SRC_DIR} < ${WS_SRC_DIR}/ign_moveit2_examples/ign_moveit2_examples.repos && \
+### Import and install dependencies, then build these dependencies (not ign_moveit2_examples yet)
+COPY ./ign_moveit2_examples.repos ${WS_SRC_DIR}/ign_moveit2_examples/ign_moveit2_examples.repos
+RUN vcs import --shallow ${WS_SRC_DIR} < ${WS_SRC_DIR}/ign_moveit2_examples/ign_moveit2_examples.repos && \
     rosdep update && \
     apt-get update && \
-    rosdep install -y -r -i --rosdistro ${ROS_DISTRO} --from-paths ${WS_SRC_DIR} && \
+    rosdep install -y -r -i --rosdistro "${ROS_DISTRO}" --from-paths ${WS_SRC_DIR} && \
     rm -rf /var/lib/apt/lists/* && \
-    source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
+    source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
+    colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release" && \
+    rm -rf ${WS_LOG_DIR}
+
+### Copy over the rest of ign_moveit2_examples, then install dependencies and build
+COPY ./ ${WS_SRC_DIR}/ign_moveit2_examples/
+RUN rosdep update && \
+    apt-get update && \
+    rosdep install -y -r -i --rosdistro "${ROS_DISTRO}" --from-paths ${WS_SRC_DIR} && \
+    rm -rf /var/lib/apt/lists/* && \
+    source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
+    colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release" && \
+    rm -rf ${WS_LOG_DIR}
 
 ### Add workspace to the ROS entrypoint
-### Source ROS entrypoint inside `~/.bashrc` to enable autocompletion
-RUN sed -i '$i source "${WS_INSTALL_DIR}\/local_setup.bash"' /ros_entrypoint.sh && \
-    sed -i '$a source /ros_entrypoint.sh' ~/.bashrc
+### Source ROS workspace inside `~/.bashrc` to enable autocompletion
+RUN sed -i '$i source "${WS_INSTALL_DIR}/local_setup.bash" --' /ros_entrypoint.sh && \
+    sed -i '$a source "/opt/ros/${ROS_DISTRO}/setup.bash"' ~/.bashrc
