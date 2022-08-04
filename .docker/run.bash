@@ -2,6 +2,22 @@
 
 TAG="andrejorsula/ign_moveit2_examples"
 
+## Forward custom volumes and environment variables
+CUSTOM_VOLUMES=()
+CUSTOM_ENVS=()
+while getopts ":v:e:" opt; do
+    case "${opt}" in
+        v) CUSTOM_VOLUMES+=("${OPTARG}") ;;
+        e) CUSTOM_ENVS+=("${OPTARG}") ;;
+        *)
+            echo >&2 "Usage: ${0} [-v VOLUME] [-e ENV] [TAG] [CMD]"
+            exit 2
+            ;;
+    esac
+done
+shift "$((OPTIND - 1))"
+
+## Determine TAG and CMD positional arguments
 if [ "${#}" -gt "0" ]; then
     if [[ $(docker images --format "{{.Tag}}" "${TAG}") =~ (^|[[:space:]])${1}($|[[:space:]]) || $(wget -q https://registry.hub.docker.com/v2/repositories/${TAG}/tags -O - | grep -Poe '(?<=(\"name\":\")).*?(?=\")') =~ (^|[[:space:]])${1}($|[[:space:]]) ]]; then
         # Use the first argument as a tag is such tag exists either locally or on the remote registry
@@ -10,6 +26,21 @@ if [ "${#}" -gt "0" ]; then
     else
         CMD=${*:1}
     fi
+fi
+
+## GPU
+LS_HW_DISPLAY=$(lshw -short -C display 2> /dev/null | grep display)
+if [[ ${LS_HW_DISPLAY^^} =~ NVIDIA ]]; then
+    # Enable GPU either via NVIDIA Container Toolkit or NVIDIA Docker (depending on Docker version)
+    if dpkg --compare-versions "$(docker version --format '{{.Server.Version}}')" gt "19.3"; then
+        GPU_OPT="--gpus all"
+    else
+        GPU_OPT="--runtime nvidia"
+    fi
+    GPU_ENVS=(
+        NVIDIA_VISIBLE_DEVICES="all"
+        NVIDIA_DRIVER_CAPABILITIES="compute,utility,graphics"
+    )
 fi
 
 ## GUI
@@ -40,12 +71,10 @@ GUI_ENVS=(
 )
 
 ## Additional volumes
-CUSTOM_VOLUMES=()
 # Synchronize timezone with host
 CUSTOM_VOLUMES+=("/etc/localtime:/etc/localtime:ro")
 
 ## Additional environment variables
-CUSTOM_ENVS=()
 # Synchronize ROS_DOMAIN_ID with host
 if [ -n "${ROS_DOMAIN_ID}" ]; then
     CUSTOM_ENVS+=("ROS_DOMAIN_ID=${ROS_DOMAIN_ID}")
@@ -78,6 +107,8 @@ DOCKER_RUN_CMD=(
     --security-opt "seccomp=unconfined"
     "${GUI_VOLUMES[@]/#/"--volume "}"
     "${GUI_ENVS[@]/#/"--env "}"
+    "${GPU_OPT}"
+    "${GPU_ENVS[@]/#/"--env "}"
     "${CUSTOM_VOLUMES[@]/#/"--volume "}"
     "${CUSTOM_ENVS[@]/#/"--env "}"
     "${TAG}"
