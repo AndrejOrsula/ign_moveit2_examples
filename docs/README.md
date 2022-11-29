@@ -26,17 +26,17 @@ The document details:
  1. Other important ROS 2 packages for the simulation
  1. Graph of runtime ROS 2 topics and nodes
 
-## Code repositories used in the demo 
+## Code repositories used in the demo
 
 Repositories used:
 
 * [Panda Ign MoveIt 2](https://github.com/AndrejOrsula/panda_ign_moveit2):
-  Software packages for Franka Emika Panda Robot that enable manipulation with MoveIt 2 
+  Software packages for Franka Emika Panda Robot that enable manipulation with MoveIt 2
   inside Ignition Gazebo. For control, ignition_ros2_control is used.
 
 * [ROS Ignition Gazebo](https://github.com/gazebosim/ros_gz/tree/galactic)
   This repository holds packages that provide integration between ROS and Ignition.
-  Mainly `ros_ign_package` is being used to launch Gazebo with ROS 2 integration 
+  Mainly `ros_ign_package` is being used to launch Gazebo with ROS 2 integration
   and `ros_ign_bridge` to convert Gz messages to ROS messages.
 
 * [Ignition Gz ROS 2 Control](https://github.com/ros-controls/gz_ros2_control) for the latest [Gazebo](https://gazebosim.org) (not to be confused with [Gazebo ROS 2 Control](https://github.com/ros-controls/gazebo_ros2_control/tree/galactic) for [Gazebo-classic](https://classic.gazebosim.org)!)
@@ -47,12 +47,12 @@ Repositories used:
 
 Two main actions needs to be done to prepare the URDF model to use Gazebo and
 ros2_control: configure ros2_control setting using the `ros2_control` URDF
-macro, and add a plugin to Gazebo to parse the `ros2_control` tags and 
+macro, and add a plugin to Gazebo to parse the `ros2_control` tags and
 load the appropriate hardware interfaces and controller manager.
 
 #### 1. URDF declaration for the [`ros2_control` URDF tag](https://control.ros.org/master/doc/getting_started/getting_started.html#hardware-description-in-urdf)
 
-This is done by adding the xacro macro `ros2_control_panda_arm` (which is 
+This is done by adding the xacro macro `ros2_control_panda_arm` (which is
 integrated from main Panda arm URDF file) and using the
 [`ign_ros2_control/IgnitionSystem`](https://github.com/ros-controls/gz_ros2_control/blob/master/README.md?plain=1#L93-L118):
 
@@ -60,7 +60,7 @@ integrated from main Panda arm URDF file) and using the
 
 #### 2. URDF declaration for the Gazebo plugin [IgnitionROS2ControlPlugin](https://github.com/ros-controls/gz_ros2_control/blob/master/README.md?plain=1#L153-L169)
 
-This is done by adding the xacro macro `ign_ros2_control` (which is integrated 
+This is done by adding the xacro macro `ign_ros2_control` (which is integrated
 from main Panda URDF file) and adding the Gazebo plugin `IgnitionROS2ControlPlugin`
 that parses the `ros2_control` tags and loads the appropriate hardware interfaces and controller manager
 
@@ -96,20 +96,20 @@ The `/target_pose` topic is subscribed to by the ROS C++ node that communicates 
 #### Robot state publisher
 
 The Robot State Publisher is a node and a class to publish
-the state of a robot to tf2. At startup time, Robot State Publisher is 
-supplied with a kinematic tree model (URDF) of the robot. It then subscribes 
+the state of a robot to tf2. At startup time, Robot State Publisher is
+supplied with a kinematic tree model (URDF) of the robot. It then subscribes
 to the `joint_states` topic (of type `sensor_msgs/msg/JointState`) to get
 individual joint states. More information in the
 [ROS 2 tutorial](https://docs.ros.org/en/galactic/Tutorials/Intermediate/URDF/Using-URDF-with-Robot-State-Publisher.html)
 
 * https://github.com/ros/robot_state_publisher
 
-#### TF2 
+#### TF2
 
 tf2 is the second generation of the transform library, which lets the user
-keep track of multiple coordinate frames over time. tf2 maintains the 
-relationship between coordinate frames in a tree structure buffered in 
-time, and lets the user transform points, vectors, etc between any 
+keep track of multiple coordinate frames over time. tf2 maintains the
+relationship between coordinate frames in a tree structure buffered in
+time, and lets the user transform points, vectors, etc between any
 two coordinate frames at any desired point in time.
 
 * http://wiki.ros.org/tf2
