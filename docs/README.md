@@ -1,8 +1,19 @@
 # Example documentation
 
 This document describes the different software components
-used by the MoveIt 2, ROS 2, Ignition Gazebo demo,
+used by the MoveIt 2, ROS 2 and Ignition Gazebo demo,
 where to find them and how they are being called.
+
+This example and documentation uses the name of ***"Ignition Gazebo"***
+to refer to the new generation of [Gazebo](https://gazebosim.org/) not
+be confused with [Gazebo classic](https://classic.gazebosim.org) also
+known as Gazebo11. The Ignition Gazebo project was renamed to just
+Gazebo or Gz so the document contains some references to the new URLs
+and name like the ones for
+[`gz_ros2_control`](https://github.com/ros-controls/gz_ros2_controlhttps://github.com/ros-controls/gz_ros2_control)
+that should not be confused with the ros2_control wrapper for the
+previous Gazebo classic named
+[`gazebo2_ros_control`](https://github.com/ros-controls/gazebo_ros2_control).
 
 ***Note:*** only the Follow Target example is used in this document
 
