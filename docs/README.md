@@ -4,10 +4,14 @@ This document describes the different software components
 used by the MoveIt 2, ROS 2 and Gazebo demo,
 where to find them and how they are being called.
 
-This example and documentation uses the name of ***"Ignition Gazebo"***
-to refer to the new generation of [Gazebo](https://gazebosim.org/) not
-be confused with [Gazebo classic](https://classic.gazebosim.org) also
-known as Gazebo11. The Ignition Gazebo project was renamed to just
+This example and documentation uses the name ***"Gazebo"***
+to refer to the new generation of the [Gazebo simulator](https://gazebosim.org/)
+not be confused with [Gazebo classic](https://classic.gazebosim.org) also
+known as Gazebo11. Current "Gazebo" was first known as
+Ignition Gazebo so the document contains some references to "ign_" or
+"ignition" like in the name of the repository.
+
+The Ignition Gazebo project was renamed to just
 Gazebo or Gz so the document contains some references to the new URLs
 and name like the ones for
 [`gz_ros2_control`](https://github.com/ros-controls/gz_ros2_control)
@@ -32,9 +36,9 @@ Repositories used:
 
 * [Panda Ign MoveIt 2](https://github.com/AndrejOrsula/panda_ign_moveit2):
   Software packages for Franka Emika Panda Robot that enable manipulation with MoveIt 2
-  inside Ignition Gazebo. For control, ign_ros2_control is used.
+  inside Gazebo. For control, ign_ros2_control is used.
 
-* [ROS Ignition Gazebo](https://github.com/gazebosim/ros_gz/tree/galactic)
+* [ROS Gazebo](https://github.com/gazebosim/ros_gz/tree/galactic)
   This repository holds packages that provide integration between ROS and Gazebo.
   Mainly `ros_ign_package` is being used to launch Gazebo with ROS 2 integration
   and `ros_ign_bridge` to convert Gz messages to ROS messages.
