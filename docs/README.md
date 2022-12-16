@@ -12,12 +12,12 @@ Ignition Gazebo, so the document contains some references to "ign_" or
 "ignition", like in the name of the repository.
 
 The Ignition Gazebo project was renamed to just
-Gazebo or Gz so the document contains some references to the new URLs
-and name like the ones for
-[`gz_ros2_control`](https://github.com/ros-controls/gz_ros2_control)
-that should not be confused with the `ros2_control` wrapper for the
-previous Gazebo classic named
-[`gazebo_ros2_control`](https://github.com/ros-controls/gazebo_ros2_control).
+Gazebo or Gz, so the document contains some references to the new URLs
+and names, like the ones for
+[`gz_ros2_control`](https://github.com/ros-controls/gz_ros2_control),
+which should not be confused with
+[`gazebo_ros2_control`](https://github.com/ros-controls/gazebo_ros2_control),
+the `ros2_control` wrapper for the previous Gazebo classic.
 
 ***Note:*** only the Follow Target example is used in this document
 
