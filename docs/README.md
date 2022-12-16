@@ -6,10 +6,10 @@ where to find them and how they are being called.
 
 This example and documentation uses the name ***"Gazebo"***
 to refer to the new generation of the [Gazebo simulator](https://gazebosim.org/)
-not be confused with [Gazebo classic](https://classic.gazebosim.org) also
-known as Gazebo11. Current "Gazebo" was first known as
-Ignition Gazebo so the document contains some references to "ign_" or
-"ignition" like in the name of the repository.
+not be confused with [Gazebo classic](https://classic.gazebosim.org), the latest
+version of which is Gazebo 11. The current "Gazebo" was formerly known as
+Ignition Gazebo, so the document contains some references to "ign_" or
+"ignition", like in the name of the repository.
 
 The Ignition Gazebo project was renamed to just
 Gazebo or Gz so the document contains some references to the new URLs
