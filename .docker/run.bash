@@ -29,7 +29,7 @@ if [ "${#}" -gt "0" ]; then
 fi
 
 ## GPU
-LS_HW_DISPLAY=$(lshw -short -C display 2> /dev/null | grep display)
+LS_HW_DISPLAY=$(lshw -C display 2> /dev/null | grep vendor)
 if [[ ${LS_HW_DISPLAY^^} =~ NVIDIA ]]; then
     # Enable GPU either via NVIDIA Container Toolkit or NVIDIA Docker (depending on Docker version)
     if dpkg --compare-versions "$(docker version --format '{{.Server.Version}}')" gt "19.3"; then
