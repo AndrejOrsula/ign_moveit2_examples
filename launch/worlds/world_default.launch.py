@@ -13,7 +13,6 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 
 def generate_launch_description() -> LaunchDescription:
-
     # Declare all launch arguments
     declared_arguments = generate_declared_arguments()
 

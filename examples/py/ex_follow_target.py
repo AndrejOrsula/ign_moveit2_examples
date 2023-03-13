@@ -12,7 +12,6 @@ from rclpy.qos import QoSProfile
 
 class MoveItFollowTarget(Node):
     def __init__(self):
-
         super().__init__("ex_follow_target_py")
 
         # Create callback group that allows execution of callbacks in parallel without restrictions
@@ -66,7 +65,6 @@ class MoveItFollowTarget(Node):
 
 
 def main(args=None):
-
     rclpy.init(args=args)
 
     target_follower = MoveItFollowTarget()

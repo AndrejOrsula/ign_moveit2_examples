@@ -13,7 +13,6 @@ from rclpy.node import Node
 
 class MoveItThrowObject(Node):
     def __init__(self):
-
         super().__init__("ex_throw_object")
 
         # Create callback group that allows execution of callbacks in parallel without restrictions
@@ -125,7 +124,6 @@ class MoveItThrowObject(Node):
 
 
 def main(args=None):
-
     rclpy.init(args=args)
 
     object_thrower = MoveItThrowObject()
