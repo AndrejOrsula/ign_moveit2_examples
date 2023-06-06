@@ -4,7 +4,7 @@ This document describes the different software components
 used by the MoveIt 2, ROS 2 and Gazebo demo,
 where to find them and how they are being called.
 
-This example and documentation uses the name ***"Gazebo"***
+This example and documentation use the name ***"Gazebo"***
 to refer to the new generation of the [Gazebo simulator](https://gazebosim.org/)
 not be confused with [Gazebo classic](https://classic.gazebosim.org), the latest
 version of which is Gazebo 11. The current "Gazebo" was formerly known as
@@ -49,7 +49,7 @@ Repositories used:
 
 ### How to prepare a Robot URDF for using Gazebo with ros2_control
 
-Two main actions needs to be done to prepare the URDF model to use `Gazebo` and
+Two main actions need to be done to prepare the URDF model to use `Gazebo` and
 `ros2_control`: configure `ros2_control` setting using the `ros2_control` URDF
 macro, and add a plugin to `Gazebo` to parse the `ros2_control` tags and
 load the appropriate hardware interfaces and controller manager.
@@ -58,17 +58,17 @@ load the appropriate hardware interfaces and controller manager.
 
 This is done by adding the xacro macro `ros2_control_panda_arm` (which is
 integrated from main Panda arm URDF file) and using the
-[`gz_ros2_control/IgnitionSystem`](https://github.com/ros-controls/gz_ros2_control/blob/master/README.md?plain=1#L93-L118):
+[`gz_ros2_control/IgnitionSystem`](https://github.com/ros-controls/gz_ros2_control/blob/9f52839be0893d13c1162cb2ed2a6b6df90226c0/README.md?plain=1#L100-L126):
 
-* https://github.com/AndrejOrsula/panda_ign_moveit2/blob/master/panda_description/urdf/panda.ros2_control#L28-L30
+* [panda_description/urdf/panda.ros2_control#L28-L30](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_description/urdf/panda.ros2_control#L28-L30)
 
-#### 2. URDF declaration for the Gazebo plugin [IgnitionROS2ControlPlugin](https://github.com/ros-controls/gz_ros2_control/blob/master/README.md?plain=1#L153-L169)
+#### 2. URDF declaration for the Gazebo plugin [IgnitionROS2ControlPlugin](https://github.com/ros-controls/gz_ros2_control/blob/9f52839be0893d13c1162cb2ed2a6b6df90226c0/README.md?plain=1#L160-L180)
 
 This is done by adding the xacro macro `gz_ros2_control` (which is integrated
 from main Panda URDF file) and adding the Gazebo plugin `IgnitionROS2ControlPlugin`
 that parses the `ros2_control` tags and loads the appropriate hardware interfaces and controller manager
 
-* https://github.com/AndrejOrsula/panda_ign_moveit2/blob/master/panda_description/urdf/panda.gazebo#L8-L16
+* [panda_description/urdf/panda.gazebo#L8-L16](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_description/urdf/panda.gazebo#L8-L16)
 
 ### How to connect MoveIt 2 with the Gazebo ros2_control plugins
 
@@ -76,13 +76,13 @@ The example launches MoveIt using gz_ros2_control:
 
 * [default.launch.py](../launch/default.launch.py#L81-L94)
 
-This snippet is calling the main [Panda MoveIt configuration launch file](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/master/panda_moveit_config/launch/move_group.launch.py):
+This snippet is calling the main [Panda MoveIt configuration launch file](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_moveit_config/launch/move_group.launch.py):
 
 * Panda main MoveIt 2 move_group invocation:
-  * https://github.com/AndrejOrsula/panda_ign_moveit2/blob/5679c0a97d5e34199271ed7abf02cf303d0e8fb9/panda_moveit_config/launch/move_group.launch.py#L248-L264
+  * [panda_moveit_config/launch/move_group.launch.py#L247-L264](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_moveit_config/launch/move_group.launch.py#L247-L264)
 
 * Controller manager
-  * https://github.com/AndrejOrsula/panda_ign_moveit2/blob/5679c0a97d5e34199271ed7abf02cf303d0e8fb9/panda_moveit_config/launch/move_group.launch.py#L309-L324
+  * [panda_moveit_config/launch/move_group.launch.py#L308-L323](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_moveit_config/launch/move_group.launch.py#L308-L323)
 
 ### How the Follow Target example declares the target pose for the manipulation
 
