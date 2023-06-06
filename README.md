@@ -2,6 +2,8 @@
 
 C++ and Python examples of using MoveIt 2 for planning motions that are executed inside ~~Ignition~~ Gazebo simulation environment. These examples make use of [ros2_control](https://github.com/ros-controls/ros2_control) via [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control).
 
+The interaction among different ROS 2, MoveIt 2 and Gazebo components is further documented in [docs/README.md](./docs/README.md), alongside suggestions for implementing a similar setup on your custom robot.
+
 > For legacy approach using [`JointTrajectoryController`](https://github.com/ignitionrobotics/ign-gazebo/blob/ign-gazebo4/src/systems/joint_trajectory_controller/JointTrajectoryController.hh) Ignition plugin, please see [legacy_jtc_ign_plugin](https://github.com/AndrejOrsula/ign_moveit2/tree/legacy_jtc_ign_plugin) branch.
 
 | <img width="100%" src="https://user-images.githubusercontent.com/22929099/147374612-3d0209d3-574e-4a4f-8077-edbbcf8fc47d.gif" alt="Animation of ex_follow_target"/> | <img width="100%" src="https://user-images.githubusercontent.com/22929099/147374613-ad15aa1a-deaf-4dcd-92b0-1a53d0097467.gif" alt="Animation of ex_throw_object"/> |
