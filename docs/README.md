@@ -74,7 +74,7 @@ that parses the `ros2_control` tags and loads the appropriate hardware interface
 
 The example launches MoveIt using gz_ros2_control:
 
-- [default.launch.py](../launch/default.launch.py#L81-L94)
+- [../launch/default.launch.py#L81-L102](https://github.com/j-rivero/ign_moveit2_examples/blob/401265d5abc98d96f019eed424debefc9637f6b7/launch/default.launch.py#L81-L102)
 
 This snippet is calling the main [Panda MoveIt configuration launch file](https://github.com/AndrejOrsula/panda_ign_moveit2/blob/9e5fabed267db78a91a2cd185ee6a89b799f3be3/panda_moveit_config/launch/move_group.launch.py):
 
@@ -90,15 +90,15 @@ This snippet is calling the main [Panda MoveIt configuration launch file](https:
 
 This repository uses a `Gazebo PosePublisher` plugin to indicate the target pose for the manipulation:
 
-- [follow_target.sdf](../worlds/follow_target.sdf#L99-L104)
+- [../worlds/follow_target.sdf#L99-L104](https://github.com/j-rivero/ign_moveit2_examples/blob/401265d5abc98d96f019eed424debefc9637f6b7/worlds/follow_target.sdf#L99-L104)
 
 Translate the pose from Gazebo to ROS using the `ros_gz_bridge`:
 
-- [world_follow_target.launch.py](../launch/worlds/world_follow_target.launch.py#L61-L76)
+- [../launch/worlds/world_follow_target.launch.py#L61-L75](https://github.com/j-rivero/ign_moveit2_examples/blob/401265d5abc98d96f019eed424debefc9637f6b7/launch/worlds/world_follow_target.launch.py#L61-L75)
 
 The `/target_pose` topic is subscribed to by the ROS C++ node that communicates with MoveIt
 
-- [ex_follow_target.cpp](../examples/cpp/ex_follow_target.cpp#L28-L57)
+- [../examples/cpp/ex_follow_target.cpp#L28-L57](https://github.com/j-rivero/ign_moveit2_examples/blob/401265d5abc98d96f019eed424debefc9637f6b7/examples/cpp/ex_follow_target.cpp#L28-L57)
 
 ### Other important ROS 2 packages
 
